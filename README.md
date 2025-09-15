@@ -1,2 +1,0 @@
-# ApocalypseBIM
-ADVANCED BIM - GROUP 12 - F25
