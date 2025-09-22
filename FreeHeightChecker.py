@@ -1,49 +1,9 @@
 import ifcopenshell
 import ifcopenshell.geom
+from A1_Group12 import getElementZCoordinate, getLevelElevation
 
-#load the IFC file
-# ifc_file = ifcopenshell.open("/Users/teiturheinesen/Library/CloudStorage/OneDrive-SharedLibraries-DanmarksTekniskeUniversitet/Rasmus Niss Kloppenborg - IFC modeller/25-06-D-MEP.ifc")
-# ifc_file = ifcopenshell.open("/Users/teiturheinesen/Library/CloudStorage/OneDrive-SharedLibraries-DanmarksTekniskeUniversitet/Rasmus Niss Kloppenborg - IFC modeller/25-08-D-MEP.ifc")
 ifc_file = ifcopenshell.open("/Users/teiturheinesen/Library/CloudStorage/OneDrive-SharedLibraries-DanmarksTekniskeUniversitet/Rasmus Niss Kloppenborg - IFC modeller/25-16-D-MEP.ifc")
-
-
-
-# find etage for elementer og sæt dem ind under etagen hvis de er defineret forkert
-
-# hvis det kører over flere etager skal elementerne sættes ind under bygningen i stedet for en specifik etage
-
-
-
-# i want to check the distance between the ducts and the floor (level) in the ifc file
 hvacElements = ifc_file.by_type("IfcDuctSegment") + ifc_file.by_type("IfcAirTerminal")
-
-
-
-# Change ifcopenshell.geom settings to use world coordinates instead of local coordinates
-settings = ifcopenshell.geom.settings()
-settings.set(settings.USE_WORLD_COORDS, True)
-
-def getLevelElevation(element):
-    rels = ifc_file.get_inverse(element)
-    for rel in rels:
-        if rel.is_a("IfcRelContainedInSpatialStructure"):
-            if rel.RelatingStructure.is_a("IfcBuildingStorey"):
-                return rel.RelatingStructure.Elevation / 1000, rel.RelatingStructure.Name  # Convert mm to m
-
-    else:
-        print("No level found for element")
-        return None
-    
-
-def getElementZCoordinate(element):
-    shape = ifcopenshell.geom.create_shape(settings, element)
-    vertices = shape.geometry.verts
-    z_values = vertices[2::3]  # Extract every third value starting from index 2 (z-coordinates)
-    if z_values:
-        return min(z_values)  # Return the minimum z-coordinate
-    else:
-        print("No vertices found for element")
-        return None
 
 
 FreeHeights = {}
