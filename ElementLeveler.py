@@ -1,5 +1,32 @@
+########################################################
+'''
+ELEMENT LEVELER
+
+Version: 22/09/2025
+
+The following script takes an element type as input (e.g. IfcDuctSegment) 
+and checks if it is defined on the correct level in the IFC file. 
+
+How to use:
+- Load your IFC file by changing the path in the ifcopenshell.open() function
+- Specify the element type you want to check (currently set to IfcDuctSegment)
+- Run the script
+
+
+Future Work:
+- Function to move element to correct level
+- GUI?
+- Visualization of elements in different colors based on their level status (correct, incorrect, between levels)
+
+
+Author: s201348, Teitur Heinesen
+
+'''
+########################################################
+
 import ifcopenshell
 import ifcopenshell.geom
+import ifcopenshell.api.spatial
 
 #load the IFC file
 # ifc_file = ifcopenshell.open("/Users/teiturheinesen/Library/CloudStorage/OneDrive-SharedLibraries-DanmarksTekniskeUniversitet/Rasmus Niss Kloppenborg - IFC modeller/25-06-D-MEP.ifc")
@@ -8,9 +35,9 @@ ifc_file = ifcopenshell.open("/Users/teiturheinesen/Library/CloudStorage/OneDriv
 
 
 # i want to check the distance between the ducts and the floor (level) in the ifc file
-hvacElements = ifc_file.by_type("IfcDuctSegment")
+# hvacElements = ifc_file.by_type("IfcDuctSegment")
 
-# hvacElements = ifc_file.by_type("IfcDuctSegment") + ifc_file.by_type("IfcAirTerminal")
+hvacElements = ifc_file.by_type("IfcDuctSegment") + ifc_file.by_type("IfcDuctFitting") + ifc_file.by_type("IfcAirTerminal") + ifc_file.by_type("IfcSpaceHeater")
 
 
 
@@ -87,10 +114,10 @@ def ChangeColor(element, colorChoice):
         Name=None
     )
     # print(f"Element {element.GlobalId} colored {color.Name}.")
+    
 
 
-
-levelElevations = {storey.Name: round(storey.Elevation / 1000,2) for storey in ifc_file.by_type('IfcBuildingStorey')}
+levelElevations = {storey: round(storey.Elevation / 1000,2) for storey in ifc_file.by_type('IfcBuildingStorey')}
 print(list(levelElevations.values()))
 
 # check hvacElements for their z coordinate and designated level - if element is not on the right level, move it to the right level
@@ -127,7 +154,8 @@ for element in hvacElements:
                         # print(f"\n🟨 Element {elementCounter} - Designated level: {round(level,2)} \n FOUND CORRECT LEVEL! ({val}) Element height: {round(maxZ-minZ,3)}. \n {minZ=} \n {maxZ=} 🟨")
                         
                         ChangeColor(element, colorChoice='Y')
-                        
+                        ifcopenshell.api.spatial.assign_container(ifc_file, products=[element], relating_structure=key)
+                        print(f"🟨 Element {elementCounter} moved to level {key.Name}. 🟨 \n")
                         # rels = ifc_file.get_inverse(element)
                         # for rel in rels:
                         #     if rel.is_a("IfcRelContainedInSpatialStructure"):
@@ -150,6 +178,12 @@ for element in hvacElements:
                 # print(f"\n⛔ Element {elementCounter} - Designated level: {round(level,2)} \n Between two levels! ({val}) Element height: {round(maxZ-minZ,3)}. \n {minZ=} \n {maxZ=} ⛔")
 
                 ChangeColor(element, colorChoice='R')
+                # get current building of element
+                buildings = ifc_file.by_type("IfcBuilding")
+                if buildings:
+                    building = buildings[0]  # Assuming there's only one building in the IFC file!!!!!!!!
+                    ifcopenshell.api.spatial.assign_container(ifc_file, products=[element], relating_structure=building)
+                print(f"⛔ Element {elementCounter} moved to building {building.Name} - between levels. ⛔ \n  ")
 
                 elementCounter += 1
                 break

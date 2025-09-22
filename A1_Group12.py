@@ -1,3 +1,20 @@
+########################################################
+'''
+The following script takes an element type as input (e.g. IfcDuctSegment) 
+and checks if it is defined on the correct level in the IFC file. 
+If not, it moves the element to the correct level. 
+It also checks the distance between the element
+
+
+
+'''
+########################################################
+
+
+
+
+
+
 import ifcopenshell
 import ifcopenshell.geom
 
