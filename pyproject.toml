@@ -1,0 +1,12 @@
+[project]
+name = "apocalypsebim"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "ifcopenshell>=0.8.3.post2",
+    "numpy>=2.3.3",
+    "occ>=0.0.2.dev20190912195130",
+    "pyqt5>=5.15.11",
+]
