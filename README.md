@@ -41,6 +41,7 @@ Future Work:
   - Counter of moved elements and elements with insufficient free height
   - General statistics report
   - GUI?
+  - Option to send an email with the generated file, to notify the original author of the IFC file of the changes. 
 
 RESULTS:
 
