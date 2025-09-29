@@ -1,6 +1,8 @@
 import ifcopenshell
 import ifcopenshell.geom
 import ifcopenshell.api.spatial
+import os
+from datetime import datetime
 from .functions import getElementZCoordinate, getLevelElevation, ChangeColor
 
  
@@ -11,12 +13,12 @@ def ElementLevelChecker(ifc_file = ifcopenshell.open("/Users/teiturheinesen/Libr
 
     # i want to check the distance between the ducts and the floor (level) in the ifc file
     targetElements = ifc_file.by_type(elementType)
-
+    misplacedElements = [[],[]]
 
 
 
     levelElevations = {storey: round(storey.Elevation / 1000,2) for storey in ifc_file.by_type('IfcBuildingStorey')}
-    print(list(levelElevations.values()))
+    # print(list(levelElevations.values()))
 
     # check hvacElements for their z coordinate and designated level - if element is not on the right level, move it to the right level
 
@@ -53,8 +55,19 @@ def ElementLevelChecker(ifc_file = ifcopenshell.open("/Users/teiturheinesen/Libr
                             if colorQuestion is True:
                                 ChangeColor(ifc_file=ifc_file, element=element, colorChoice='Y')
 
+                            misplacedElements[0].append({
+                                'elementID': element.GlobalId,
+                                'elementType': element.is_a(),
+                                'originalLevel': levelName,
+                                'originalLevelElevation': level,
+                                'newLevel': key.Name,
+                                'newLevelElevation': round(key.Elevation / 1000,2),
+                                'elementHeight': round(maxZ-minZ,3),
+                                'minZ': round(minZ,3),
+                                'maxZ': round(maxZ,3)
+                            })
                             ifcopenshell.api.spatial.assign_container(ifc_file, products=[element], relating_structure=key)
-                            print(f"🟨 Element {elementCounter} moved to level {key.Name}. 🟨 \n")
+                            # print(f"🟨 Element {elementCounter} moved to level {key.Name}. 🟨 \n")
             
                             elementCounter += 1
                             break
@@ -77,19 +90,28 @@ def ElementLevelChecker(ifc_file = ifcopenshell.open("/Users/teiturheinesen/Libr
                     if buildings:
                         building = buildings[0]  # Assuming there's only one building in the IFC file!!!!!!!!
                         ifcopenshell.api.spatial.assign_container(ifc_file, products=[element], relating_structure=building)
-                    print(f"⛔ Element {elementCounter} moved to building {building.Name} - between levels. ⛔ \n  ")
-
+                    # print(f"⛔ Element {elementCounter} moved to building {building.Name} - between levels. ⛔ \n  ")
+                    misplacedElements[1].append({
+                        'elementID': element.GlobalId,
+                        'elementType': element.is_a(),
+                        'originalLevel': levelName,
+                        'originalLevelElevation': level,
+                        'newRepresentation': building.Name,
+                        'elementHeight': round(maxZ-minZ,3),
+                        'minZ': round(minZ,3),
+                        'maxZ': round(maxZ,3)
+                    })
                     elementCounter += 1
                     break
                 
                 
 
         
-        else:
-            print(f"Could not determine free height for element {element.GlobalId}")
+        # else:
+        #     print(f"Could not determine free height for element {element.GlobalId}")
 
 
-    return ifc_file
+    return ifc_file, misplacedElements
 
 
 
