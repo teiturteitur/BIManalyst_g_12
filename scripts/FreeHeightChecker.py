@@ -15,7 +15,7 @@ def FreeHeightChecker(ifc_file, elementType='IfcDuctSegment', minFreeHeight=2.6,
         level, name = getLevelElevation(ifc_file=ifc_file,element=element)
         if level is False:
             # element is assigned to building, not a storey
-            print(f"⚠️ Element {element.GlobalId} is assigned to the building - Skipping")
+            # print(f"⚠️ Element {element.GlobalId} is assigned to the building - Skipping")
             targetElements.remove(element)
             continue
         else:
@@ -33,8 +33,8 @@ def FreeHeightChecker(ifc_file, elementType='IfcDuctSegment', minFreeHeight=2.6,
 
     # Sort FreeHeights by level and print results
     FreeHeights = dict(sorted(FreeHeights.items(), key=lambda item: item[1][1]))
-    for name, (free_height, level, element) in FreeHeights.items():
-        print(f"\nFree height for {name}: {round(free_height,2)} m (Level: {round(level,2)} m)")
+    # for name, (free_height, level, element) in FreeHeights.items():
+    #     print(f"\nFree height for {name}: {round(free_height,2)} m (Level: {round(level,2)} m)")
 
     # Change color of the lowest duct to red in the ifc file
     lowest_duct = [FreeHeights[level][2] for level in FreeHeights]
@@ -65,12 +65,12 @@ def FreeHeightChecker(ifc_file, elementType='IfcDuctSegment', minFreeHeight=2.6,
             )
 
             if not element.Representation:
-                print(f"No representation for element {element.GlobalId}")
+                # print(f"No representation for element {element.GlobalId}")
                 continue
             
             representations = element.Representation.Representations
             if not representations or not representations[0].Items:
-                print(f"No items for element {element.GlobalId}")
+                # print(f"No items for element {element.GlobalId}")
                 continue
             
             representation_item = representations[0].Items[0]
