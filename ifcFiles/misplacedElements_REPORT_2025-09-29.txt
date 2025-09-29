@@ -1,0 +1,361 @@
+Misplaced Elements Report - Generated on 2025-09-29
+========================================
+
+⚠️ Elements potentially placed on the wrong level ⚠️:
+Element 13Bmy_Hk59qvzgOiQcfKns (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.14 m
+  Min Z: 6.589 m
+  Max Z: 6.728 m
+
+Element 13Bmy_Hk59qvzgOiQcfKmZ (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.125 m
+  Min Z: 6.596 m
+  Max Z: 6.721 m
+
+Element 13Bmy_Hk59qvzgOiQcfKmV (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.124 m
+  Min Z: 6.596 m
+  Max Z: 6.721 m
+
+Element 13Bmy_Hk59qvzgOiQcfN35 (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 3 (11.01 m)
+  Element Height: 0.4 m
+  Min Z: 14.203 m
+  Max Z: 14.603 m
+
+Element 1PzC$7BVjEoRHVT_TpaQiP (Type: IfcDuctSegment)
+  Original Level: Level 4 (15.11 m)
+  New Level: Level 3 (11.01 m)
+  Element Height: 0.35 m
+  Min Z: 14.26 m
+  Max Z: 14.61 m
+
+Element 05lJuabzPFkRptQ0E0QX2Y (Type: IfcDuctSegment)
+  Original Level: Level 2 (7.34 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.35 m
+  Min Z: 6.521 m
+  Max Z: 6.871 m
+
+Element 3CwKJjb1T0nhTXvX54N44K (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.35 m
+  Min Z: 6.456 m
+  Max Z: 6.806 m
+
+Element 0l89ZydrzBZQ5_whMBqyKr (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.125 m
+  Min Z: 6.595 m
+  Max Z: 6.72 m
+
+Element 0l89ZydrzBZQ5_whMBqyoD (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.35 m
+  Min Z: 6.287 m
+  Max Z: 6.637 m
+
+Element 1_fPVr3DfF99sKEErzey_k (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 3 (11.01 m)
+  Element Height: 0.4 m
+  Min Z: 13.98 m
+  Max Z: 14.38 m
+
+Element 1$GSJYhkHEH8p6OOPxYK9r (Type: IfcDuctSegment)
+  Original Level: Level 2 (7.34 m)
+  New Level: Level 3 (11.01 m)
+  Element Height: 0.141 m
+  Min Z: 14.333 m
+  Max Z: 14.474 m
+
+Element 1$GSJYhkHEH8p6OOPxYLzH (Type: IfcDuctSegment)
+  Original Level: Level 2 (7.34 m)
+  New Level: Level 3 (11.01 m)
+  Element Height: 0.141 m
+  Min Z: 14.333 m
+  Max Z: 14.474 m
+
+Element 1$GSJYhkHEH8p6OOPxYLZM (Type: IfcDuctSegment)
+  Original Level: Level 2 (7.34 m)
+  New Level: Level 3 (11.01 m)
+  Element Height: 0.141 m
+  Min Z: 14.334 m
+  Max Z: 14.474 m
+
+Element 1$GSJYhkHEH8p6OOPxYLcP (Type: IfcDuctSegment)
+  Original Level: Level 2 (7.34 m)
+  New Level: Level 3 (11.01 m)
+  Element Height: 0.141 m
+  Min Z: 14.333 m
+  Max Z: 14.474 m
+
+Element 1$GSJYhkHEH8p6OOPxYL80 (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.14 m
+  Min Z: 6.589 m
+  Max Z: 6.728 m
+
+Element 1GUSHHdgv4yfxFH03Nye9X (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.35 m
+  Min Z: 6.287 m
+  Max Z: 6.637 m
+
+Element 2Z31LG4QPCSOTjterifAt6 (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.109 m
+  Min Z: 6.604 m
+  Max Z: 6.713 m
+
+Element 1PzC$7BVjEoRHVT_TpaRYl (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.315 m
+  Min Z: 6.501 m
+  Max Z: 6.816 m
+
+Element 2Z31LG4QPCSOTjterifAJF (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.109 m
+  Min Z: 6.604 m
+  Max Z: 6.713 m
+
+Element 2Z31LG4QPCSOTjterif5kL (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.14 m
+  Min Z: 6.589 m
+  Max Z: 6.728 m
+
+Element 2Z31LG4QPCSOTjterif5g0 (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.124 m
+  Min Z: 6.596 m
+  Max Z: 6.721 m
+
+Element 2Z31LG4QPCSOTjterif5mS (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.124 m
+  Min Z: 6.596 m
+  Max Z: 6.721 m
+
+Element 2Z31LG4QPCSOTjterif5D1 (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.125 m
+  Min Z: 6.596 m
+  Max Z: 6.721 m
+
+Element 1naelB5AX5tBaorW3GAXbe (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.2 m
+  Min Z: 6.573 m
+  Max Z: 6.773 m
+
+Element 1naelB5AX5tBaorW3GAY3G (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.14 m
+  Min Z: 6.589 m
+  Max Z: 6.728 m
+
+Element 0KR6AndU92$vr2eJhxPCxv (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.2 m
+  Min Z: 6.558 m
+  Max Z: 6.758 m
+
+Element 0jVa47w5z2MQQ$qWhyDtOR (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.2 m
+  Min Z: 6.558 m
+  Max Z: 6.758 m
+
+Element 0jVa47w5z2MQQ$qWhyDtTD (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.2 m
+  Min Z: 6.558 m
+  Max Z: 6.758 m
+
+Element 0jVa47w5z2MQQ$qWhyDtV0 (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.2 m
+  Min Z: 6.558 m
+  Max Z: 6.758 m
+
+Element 0jVa47w5z2MQQ$qWhyDtGA (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.2 m
+  Min Z: 6.558 m
+  Max Z: 6.758 m
+
+Element 0jVa47w5z2MQQ$qWhyDtIh (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.2 m
+  Min Z: 6.558 m
+  Max Z: 6.758 m
+
+Element 0jVa47w5z2MQQ$qWhyDqXL (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.315 m
+  Min Z: 6.501 m
+  Max Z: 6.816 m
+
+Element 0jVa47w5z2MQQ$qWhyDqdd (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.315 m
+  Min Z: 6.501 m
+  Max Z: 6.816 m
+
+Element 0jVa47w5z2MQQ$qWhyDqww (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.315 m
+  Min Z: 6.501 m
+  Max Z: 6.816 m
+
+Element 0jVa47w5z2MQQ$qWhyDqUE (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.315 m
+  Min Z: 6.501 m
+  Max Z: 6.816 m
+
+Element 0jVa47w5z2MQQ$qWhyDqHL (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.315 m
+  Min Z: 6.501 m
+  Max Z: 6.816 m
+
+Element 1jjAhPT5bAbO$sGxTN0K_3 (Type: IfcDuctSegment)
+  Original Level: Level 2 (7.34 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.35 m
+  Min Z: 6.521 m
+  Max Z: 6.871 m
+
+Element 1jjAhPT5bAbO$sGxTN0Ky6 (Type: IfcDuctSegment)
+  Original Level: Level 2 (7.34 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.35 m
+  Min Z: 6.521 m
+  Max Z: 6.871 m
+
+Element 0BKmRl_hX4_Oqox_3pL8i9 (Type: IfcDuctSegment)
+  Original Level: Level 4 (15.11 m)
+  New Level: Level 1 (3.67 m)
+  Element Height: 0.211 m
+  Min Z: 6.128 m
+  Max Z: 6.338 m
+
+
+========================================
+
+⛔ Elements placed between levels (Should potentially be moved to building) ⛔:
+Element 0mhmQlUGT8ygKXtrp8eQSt (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Representation: 
+  Element Height: 2.615 m
+  Min Z: 3.586 m
+  Max Z: 6.201 m
+
+Element 13Bmy_Hk59qvzgOiQcfKQ1 (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Representation: 
+  Element Height: 5.021 m
+  Min Z: -2.465 m
+  Max Z: 2.556 m
+
+Element 13Bmy_Hk59qvzgOiQcfN3D (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Representation: 
+  Element Height: 3.63 m
+  Min Z: 10.312 m
+  Max Z: 13.943 m
+
+Element 13Bmy_Hk59qvzgOiQcfNyl (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Representation: 
+  Element Height: 12.618 m
+  Min Z: -2.568 m
+  Max Z: 10.05 m
+
+Element 05lJuabzPFkRptQ0E0QX1g (Type: IfcDuctSegment)
+  Original Level: Level 2 (7.34 m)
+  New Representation: 
+  Element Height: 3.017 m
+  Min Z: 7.078 m
+  Max Z: 10.095 m
+
+Element 30EyfgUjn3HPbgzE1yWy35 (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Representation: 
+  Element Height: 2.852 m
+  Min Z: 3.2 m
+  Max Z: 6.052 m
+
+Element 30EyfgUjn3HPbgzE1yWy3U (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Representation: 
+  Element Height: 4.825 m
+  Min Z: -2.465 m
+  Max Z: 2.36 m
+
+Element 0KR6AndU92$vr2eJhxPB7a (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Representation: 
+  Element Height: 12.402 m
+  Min Z: -2.465 m
+  Max Z: 9.936 m
+
+Element 0KR6AndU92$vr2eJhxPBob (Type: IfcDuctSegment)
+  Original Level: Level 0 (0.0 m)
+  New Representation: 
+  Element Height: 3.456 m
+  Min Z: 10.276 m
+  Max Z: 13.732 m
+
+Element 0BKmRl_hX4_Oqox_3pL8Yj (Type: IfcDuctSegment)
+  Original Level: Level 4 (15.11 m)
+  New Representation: 
+  Element Height: 3.434 m
+  Min Z: 10.365 m
+  Max Z: 13.799 m
+
+Element 0BKmRl_hX4_Oqox_3pL85I (Type: IfcDuctSegment)
+  Original Level: Level 4 (15.11 m)
+  New Representation: 
+  Element Height: 3.182 m
+  Min Z: 6.693 m
+  Max Z: 9.875 m
+
+
+========================================
+
