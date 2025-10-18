@@ -13,7 +13,26 @@ How to use:
 
 
 Future Work:
-- GUI?
+    small(er) stuff
+    - BCF files instead of text files
+
+    - Pick entire systems instead of element types (e.g. the whole duct system including fittings and air terminals)
+
+    - create simple UI or pop-up window to select the IFC file and element type 
+
+    
+    big stuff
+    - Import spaces from ARCH IFC model and do clash detection with MEP elements to determine placements of elements
+
+    - check ifcopenshell.IfcDistributionElement.HasPorts to make sure that all elements are connected
+
+    - for each space, calculate the required air flow according to space type/usage etc.
+
+    - if a space contains air terminals, divide the required air flow between them and do the following:
+        - for each air terminal in each space, check connected duct/fitting and add the required air flow to it
+        - continue upstream until the main duct is reached (until the duct ends)
+        - when all air terminals have been processed, check if the ducts are correctly dimensioned for the required air flow
+        - if not, make a suggestion in the bcf file
 
 
 Authors: s214310, s203493, s201348
@@ -23,6 +42,7 @@ Authors: s214310, s203493, s201348
 
 from scripts import ElementLeveler 
 from scripts import FreeHeightChecker
+from scripts import menuFunctions
 import os
 from datetime import datetime
 import ifcopenshell
@@ -33,8 +53,7 @@ from rich.panel import Panel
 if __name__ == "__main__":
 
     #load the IFC file
-    ifc_fileName = "25-16-D-MEP.ifc" # CHANGE THIS TO YOUR IFC FILE NAME!
-
+  
 
     console = Console()
     console.print("\n")
@@ -45,6 +64,13 @@ if __name__ == "__main__":
         border_style="cyan"
     ))
     
+
+    ifc_fileName = menuFunctions.choose_file_from_directory(console, "ifcFiles", ".ifc")
+
+    console.print("\nTo properly run this script, a second IFC file with defined spaces is needed. (e.g. architectural model):")
+    ifc_SpaceFile = menuFunctions.choose_file_from_directory(console, "ifcFiles", ".ifc", exceptions=[ifc_fileName])
+
+
     # ask for what should be checked
     elementType = console.input("\n\nPlease select which element type should be checked (default is IfcDuctSegment): [bold green](IfcDuctSegment/IfcPipeSegment etc.)[/bold green] ") or "IfcDuctSegment"
 
@@ -71,13 +97,13 @@ if __name__ == "__main__":
     # Check element placements in the IFC file
     with console.status("\n[bold green]Checking element placements in the IFC file...", spinner='dots'):
         ifc_fileELC, misplacedElements = ElementLeveler.ElementLevelChecker(ifc_file=ifc_file, elementType=elementType, colorQuestion=ELCcolorQuestion)
-    console.print(f"""Total elements potentially misplaced: {len(misplacedElements[0]) + len(misplacedElements[1])} \n
+    console.print(f"""\nTotal elements potentially misplaced: {len(misplacedElements[0]) + len(misplacedElements[1])} \n
 - Elements potentially placed on the wrong level: {len(misplacedElements[0])} \n
 - Elements placed between levels (Should potentially be moved to building): {len(misplacedElements[1])} \n""")
     if ELCcolorQuestion is True:
         # save the ifc file to desktop
         levelCheckFileName = "ElementLeveler.ifc"
-        ifc_fileELC.write("ifcFiles/" + levelCheckFileName)
+        ifc_fileELC.write("outputFiles/" + levelCheckFileName)
         console.print("Element Leveler IFC file saved as " + levelCheckFileName)
 
     # Check free heights in the corrected IFC file
@@ -87,14 +113,14 @@ if __name__ == "__main__":
     if FHCcolorQuestion is True:
         # save the ifc file to desktop
         FreeHeightFileName = "FreeHeightChecker.ifc"
-        ifc_fileFHC.write("ifcFiles/" + FreeHeightFileName)
+        ifc_fileFHC.write("outputFiles/" + FreeHeightFileName)
         console.print("Free Height IFC file saved as " + FreeHeightFileName)
 
 
     # write misplacedElements into text file
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d")
-    with open(f"ifcFiles/misplacedElements_REPORT_{dt_string}.txt", "w") as f:
+    with open(f"outputFiles/misplacedElements_REPORT_{dt_string}.txt", "w") as f:
         f.write(f"Misplaced Elements Report - Generated on {dt_string}\n")
         f.write("========================================\n")
         f.write(f"""\n Overview of potentially misplaced elements for element type: {elementType}\n
