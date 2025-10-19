@@ -2,4 +2,5 @@ ApocalypseBIM.code-workspace
 .python-version
 uv.lock
 README.md
-ifcFiles/outputFiles/
+ifcFiles/
+outputFiles/
