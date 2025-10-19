@@ -1,14 +1,17 @@
 import ifcopenshell
 import ifcopenshell.geom
 from .functions import getElementZCoordinate, getLevelElevation
+from rich.console import Console
+from rich.table import Table
+from rich.prompt import Prompt
 
 
 
-def FreeHeightChecker(ifc_file, elementType='IfcDuctSegment', minFreeHeight=2.6, colorQuestion=True):
+def FreeHeightChecker(ifc_file, targetElements=[], minFreeHeight=2.6, colorQuestion=True):
 
     FreeHeights = {}
 
-    targetElements = ifc_file.by_type(elementType)
+    targetElements = targetElements
     
     for element in targetElements:
         element_z = getElementZCoordinate(element=element)
@@ -33,8 +36,8 @@ def FreeHeightChecker(ifc_file, elementType='IfcDuctSegment', minFreeHeight=2.6,
 
     # Sort FreeHeights by level and print results
     FreeHeights = dict(sorted(FreeHeights.items(), key=lambda item: item[1][1]))
-    # for name, (free_height, level, element) in FreeHeights.items():
-    #     print(f"\nFree height for {name}: {round(free_height,2)} m (Level: {round(level,2)} m)")
+    for name, (free_height, level, element) in FreeHeights.items():
+        print(f"\nFree height for {name}: {round(free_height,2)} m (Level: {round(level,2)} m)")
 
     # Change color of the lowest duct to red in the ifc file
     lowest_duct = [FreeHeights[level][2] for level in FreeHeights]
