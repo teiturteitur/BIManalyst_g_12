@@ -68,15 +68,11 @@ Communicate: Provide visual IFC feedback (colored elements) and summary reports.
 
 Produce a BPMN drawing for your chosen use case. link to this so we can see it in your markdown file. To do this you will have to save it as an SVG, please also save the BPMN with it.mYou can use this online tool to create a BPMN file.
 
+Scoped use case:
 
+It is chosen to zoom in on the Free Height Check from the whole use case. In the scoped use case it is investigated whether the ventilation shaft systems are dimensioned correctly, as this directly affects the validity of the free height check.
 
-
-
-
-
-
-
-
+By verifying the shaft dimensions, it is ensured that the calculated free height represents the usable indoor space and that the model complies with both ARCH and MEP requirements. The scoped process is highlighted in the "Whole use case" diagram and described in detail in the "Scoped use case" BPMN diagram.
 
 
 
