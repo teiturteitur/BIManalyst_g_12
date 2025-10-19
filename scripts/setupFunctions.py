@@ -1,11 +1,14 @@
 from datetime import datetime
+import datetime
 from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt
 import ifcopenshell
 from ifcopenshell.util.element import copy_deep
+from bcf.v2.bcfxml import BcfXml
 import os
 import sys
+import uuid
 
 
 
@@ -170,39 +173,97 @@ def merge_spaces_with_quantities_and_structure(console, source_ifc, target_ifc):
     return target_ifc, copied_spaces
 
 
-def writeReport(console, misplacedElements):
-    # write misplacedElements into text file
-    now = datetime.now()
-    dt_string = now.strftime("%Y-%m-%d")
-    console.print(f"[bold green]Writing report to outputFiles/misplacedElements_REPORT_{dt_string}...[/bold green]")
-    with open(f"outputFiles/misplacedElements_REPORT_{dt_string}.txt", "w") as f:
-        f.write(f"Misplaced Elements Report - Generated on {dt_string}\n")
-        f.write("========================================\n")
-        f.write(f"""\n Overview of potentially misplaced elements:\n
-Total elements potentially misplaced: {len(misplacedElements[0]) + len(misplacedElements[1])}
-- Elements potentially placed on the wrong level: {len(misplacedElements[0])}
-- Elements placed between levels (Should potentially be moved to building): {len(misplacedElements[1])}
-\n========================================\n\n""")
 
-        f.write("⚠️ Elements potentially placed on the wrong level ⚠️:\n")
-        for element in misplacedElements[0]:
-            f.write(f"Element {element['elementID']} (Type: {element['elementType']})\n")
-            f.write(f"  Original Level: {element['originalLevel']} ({element['originalLevelElevation']} m)\n")
-            f.write(f"  New Level: {element['newLevel']} ({element['newLevelElevation']} m)\n")
-            f.write(f"  Element Height: {element['elementHeight']} m\n")
-            f.write(f"  Min Z: {element['minZ']} m\n")
-            f.write(f"  Max Z: {element['maxZ']} m\n")
-            f.write("\n")
+def iso_now():
+    return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
-        f.write("\n========================================\n\n")
-        f.write("⛔ Elements placed between levels (Should potentially be moved to building) ⛔:\n")
-        for element in misplacedElements[1]:
-            f.write(f"Element {element['elementID']} (Type: {element['elementType']})\n")
-            f.write(f"  Original Level: {element['originalLevel']} ({element['originalLevelElevation']} m)\n")
-            f.write(f"  New Representation: {element['newRepresentation']}\n")
-            f.write(f"  Element Height: {element['elementHeight']} m\n")
-            f.write(f"  Min Z: {element['minZ']} m\n")
-            f.write(f"  Max Z: {element['maxZ']} m\n")
-            f.write("\n")
-        f.write("\n========================================\n\n")
-        f.close()
+def generate_bcf_from_errors(
+    console: Console,
+    ifc_file,
+    misplacedElements: list,
+    missingAHUsystems: dict,
+    unassignedTerminals: dict,
+    output_bcf: str = "hvac_issues.bcfzip"
+):
+    """
+    Automatically writes a BCF file listing coordination issues:
+      - misplacedElements: list of dicts with keys ['elementID', 'elementType', 'originalLevel', 'newLevel', ...]
+      - missingAHUsystems: dict keyed by system name with ['ElementCount', 'ElementTypes', 'ElementIDs']
+      - unassignedTerminals: dict keyed by flow direction, each containing list of GUIDs
+    """
+
+    console.print("🔧 Opening IFC file...")
+    model = ifc_file
+
+    console.print("📦 Creating new BCF project...")
+    bcf_project = BcfXml.create_new(project_name="HVAC Coordination Issues")
+
+    # misplaced elements
+    console.print("🧱 Adding misplaced element topics...")
+    for category_name, elements in misplacedElements.items():
+        for guid, e in elements.items():
+            title = f"{category_name}: {e.get('elementType', 'Unknown')}"
+            desc_lines = [
+                f"Element: {guid}",
+                f"Type: {e.get('elementType', 'Unknown')}",
+                f"Issue Category: {category_name}",
+            ]
+
+            # Add more context if fields exist
+            if "originalLevel" in e and "newLevel" in e:
+                desc_lines.append(
+                    f"Moved from {e['originalLevel']} (elev {e.get('originalLevelElevation')}) "
+                    f"to {e['newLevel']} (elev {e.get('newLevelElevation')})."
+                )
+            if "minZ" in e and "maxZ" in e:
+                desc_lines.append(
+                    f"Min Z: {e['minZ']}, Max Z: {e['maxZ']}, Height: {e.get('elementHeight')}"
+                )
+
+            desc = "\n".join(desc_lines)
+
+            topic = bcf_project.add_topic(
+                title=title,
+                description=desc,
+                author="HVAC-Checker",
+            )
+
+            # if guid:
+            #     topic.add_reference(reference_type="IfcElement", ifc_guid=guid)
+
+
+    # systems missing AHUs
+    console.print("💨 Adding missing AHU system topics...")
+    for sys_name, info in missingAHUsystems.items():
+        title = f"System {sys_name}: Missing Air Handling Unit"
+        desc = (
+            f"The distribution system '{sys_name}' contains {info.get('ElementCount', 0)} elements "
+            f"but no AHU (IfcUnitaryUnit) was found.\n"
+            f"Types: {info.get('ElementTypes', 'Unknown')}."
+        )
+        topic = bcf_project.add_topic(
+            title=title,
+            description=desc,
+            author="HVAC-Checker"
+        )
+        # # Optionally link one representative element
+        # if info.get("ElementIDs"):
+        #     topic.add_reference(reference_type="IfcElement", ifc_guid=info["ElementIDs"][0])
+
+    # unassigned air terminals
+    console.print("🌬️ Adding unassigned terminal topics...")
+    for flow_dir, guid_list in unassignedTerminals.items():
+        for guid in guid_list:
+            title = f"Air terminal not placed in a space ({flow_dir})"
+            desc = f"Air terminal {guid} with flow direction '{flow_dir}' is not located inside an IfcSpace."
+            topic = bcf_project.add_topic(
+                title=guid,
+                description=desc,
+                author="HVAC-Checker"
+            )
+            # topic.add_reference(reference_type="IfcElement", ifc_guid=guid)
+
+    # save the BCF file
+    bcf_project.save(output_bcf)
+    console.print(f"✅ BCF file successfully written: {output_bcf}")
+

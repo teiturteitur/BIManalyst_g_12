@@ -98,14 +98,14 @@ if __name__ == "__main__":
             # console.print("Element Leveler IFC file with Spaces saved as " + levelCheckFileName)
 
     with console.status("\n[bold green]Checking air terminal placements in spaces...", spinner='dots'):
-        spaceTerminals = systemAnalyzer.airTerminalSpaceClashAnalyzer(console=console, MEP_file_withSpaces=ifc_file_withSpaces, identifiedSystems=identifiedSystems)
+        spaceTerminals, unassignedTerminals = systemAnalyzer.airTerminalSpaceClashAnalyzer(console=console, MEP_file_withSpaces=ifc_file_withSpaces, identifiedSystems=identifiedSystems)
 
 
 
     with console.status("\n[bold green]Calculating required air flows for spaces...", spinner='dots'):
         spaceAirFlows = systemAnalyzer.spaceAirFlowCalculator(console=console, MEP_file_withSpaces=ifc_file_withSpaces, spaceTerminals=spaceTerminals)
 
-
+    # console.print(f'\n {misplacedElements=} \n {missingAHUsystems=} \n {unassignedTerminals=}')
 
     # with console.status("[bold green]Checking free heights in the (corrected) IFC file...", spinner='dots'):
     #     ifc_fileFHC = FreeHeightChecker.FreeHeightChecker(ifc_file=ifc_fileELC, targetElements=targetElements, minFreeHeight=2.6, colorQuestion=False)
@@ -114,8 +114,14 @@ if __name__ == "__main__":
     #     ifc_fileFHC.write("outputFiles/" + FreeHeightFileName)
     #     console.print("Free Height IFC file saved as " + FreeHeightFileName)
 
-    setupFunctions.writeReport(console=console, misplacedElements=misplacedElements)
+    # setupFunctions.writeBCF(console=console, misplacedElements=misplacedElements, missingAHUsystems=missingAHUsystems, unassignedTerminals=unassignedTerminals)
     
+    with console.status("\n[bold green]Generating BCF file with issues found...", spinner='dots'):
+        setupFunctions.generate_bcf_from_errors(console=console, ifc_file=ifc_file_withSpaces,
+                                                misplacedElements=misplacedElements,
+                                                missingAHUsystems=missingAHUsystems,
+                                                unassignedTerminals=unassignedTerminals,
+                                                output_bcf="outputFiles/hvacReport.bcfzip")
 
 
     console.print("[bold cyan]Done![bold cyan]\n")

@@ -3,11 +3,8 @@ This function analyzes the IfcBuildingSystems in an IFC file and checks if any o
 
 if an IfcBuildingSystem does NOT contain an AHU element, it will be reported as output.
 
-
-
-*NOT IMPLEMENTED YET* 
 All IfcBuildingSystems _CONTAINING_ an AHU element will be further analyzed, to check if the system is dimensioned correctly for the required air flow. 
-*NOT IMPLEMENTED YET*
+
 
 
 Authors: s214310, s203493, s201348
@@ -149,6 +146,7 @@ def airTerminalSpaceClashAnalyzer(console, MEP_file_withSpaces, identifiedSystem
             console.print(f"[yellow]Skipping space {space.GlobalId}: {e}[/yellow]")
 
     spaceTerminals = {}
+    unassignedTerminals = {"Supply": [], "Return": []}
 
     for systemName, info in identifiedSystems.items():
         # console.print(f"\n[bold cyan]Analyzing system {systemName}[/bold cyan]")
@@ -182,13 +180,11 @@ def airTerminalSpaceClashAnalyzer(console, MEP_file_withSpaces, identifiedSystem
                     spaceTerminals[found_space.GlobalId]["Supply"].append(air_terminal)
 
             elif not found_space: # unassigned air terminals
-                if "Unassigned" not in spaceTerminals:
-                    spaceTerminals["Unassigned"] = {"Supply": [], "Return": []}
 
                 if 'VU' in systemName:
-                    spaceTerminals["Unassigned"]["Return"].append(air_terminal)
+                    unassignedTerminals["Return"].append(air_terminal)
                 elif 'VI' in systemName:
-                    spaceTerminals["Unassigned"]["Supply"].append(air_terminal)
+                    unassignedTerminals["Supply"].append(air_terminal)
 
     # create table with space names and number of air terminals in each space - lastly a row with unnassigned air terminals
     table_spaces = Table(title="Air Terminals in Spaces", show_lines=True)
@@ -197,16 +193,13 @@ def airTerminalSpaceClashAnalyzer(console, MEP_file_withSpaces, identifiedSystem
     table_spaces.add_column("Return Air Terminals", style="blue")
 
     for spaceID, terminals in spaceTerminals.items():
-        if spaceID == "Unassigned":
-            pass
-        else:
-            table_spaces.add_row(MEP_file_withSpaces.by_guid(spaceID).LongName, str(len(terminals.get("Supply", []))), str(len(terminals.get("Return", []))))
-    
+        table_spaces.add_row(MEP_file_withSpaces.by_guid(spaceID).LongName, str(len(terminals.get("Supply", []))), str(len(terminals.get("Return", []))))
+
     # add unassigned row
-    table_spaces.add_row("[bold red]Unassigned[/bold red]", str(len(spaceTerminals.get("Unassigned", {}).get("Supply", []))), str(len(spaceTerminals.get("Unassigned", {}).get("Return", []))))
+    table_spaces.add_row("[bold red]Unassigned[/bold red]", str(len(unassignedTerminals.get("Supply", []))), str(len(unassignedTerminals.get("Return", []))))
     # console.print(table_spaces)
 
-    return spaceTerminals
+    return spaceTerminals, unassignedTerminals
 
 def spaceAirFlowCalculator(console, MEP_file_withSpaces, spaceTerminals):
     """Calculate required air flow for each space based on space.LongName and number of air terminals.

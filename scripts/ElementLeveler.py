@@ -16,7 +16,7 @@ def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturhein
 
     # i want to check the distance between the ducts and the floor (level) in the ifc file
     targetElements = targetElements
-    misplacedElements = [[],[]]
+    misplacedElements = {'wrongLevel': {}, 'betweenLevels': {}}
 
 
 
@@ -58,7 +58,7 @@ def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturhein
                             if colorQuestion is True:
                                 ChangeColor(ifc_file=ifc_file, element=element, colorChoice='Y')
 
-                            misplacedElements[0].append({
+                            misplacedElements['wrongLevel'][element.GlobalId] = {
                                 'elementID': element.GlobalId,
                                 'elementType': element.is_a(),
                                 'originalLevel': levelName,
@@ -68,7 +68,7 @@ def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturhein
                                 'elementHeight': round(maxZ-minZ,3),
                                 'minZ': round(minZ,3),
                                 'maxZ': round(maxZ,3)
-                            })
+                            }
                             ifcopenshell.api.spatial.assign_container(ifc_file, products=[element], relating_structure=key)
                             # print(f"🟨 Element {elementCounter} moved to level {key.Name}. 🟨 \n")
             
@@ -94,7 +94,7 @@ def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturhein
                         building = buildings[0]  # Assuming there's only one building in the IFC file!!!!!!!!
                         ifcopenshell.api.spatial.assign_container(ifc_file, products=[element], relating_structure=building)
                     # print(f"⛔ Element {elementCounter} moved to building {building.Name} - between levels. ⛔ \n  ")
-                    misplacedElements[1].append({
+                    misplacedElements['betweenLevels'][element.GlobalId] =  {
                         'elementID': element.GlobalId,
                         'elementType': element.is_a(),
                         'originalLevel': levelName,
@@ -103,7 +103,7 @@ def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturhein
                         'elementHeight': round(maxZ-minZ,3),
                         'minZ': round(minZ,3),
                         'maxZ': round(maxZ,3)
-                    })
+                    }
                     elementCounter += 1
                     break
                 
@@ -117,9 +117,9 @@ def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturhein
     table.add_column("Category", justify="center", style="cyan", no_wrap=True)
     table.add_column("Count", justify="center", style="magenta")
 
-    table.add_row("Placed on wrong level", str(len(misplacedElements[0])))
-    table.add_row("Placed between levels", str(len(misplacedElements[1])),end_section=True)
-    table.add_row("Total", str(len(misplacedElements[0]) + len(misplacedElements[1])))
+    table.add_row("Placed on wrong level", str(len(misplacedElements['wrongLevel'])), end_section=True)
+    table.add_row("Placed between levels", str(len(misplacedElements['betweenLevels'])),end_section=True)
+    table.add_row("Total", str(len(misplacedElements['wrongLevel']) + len(misplacedElements['betweenLevels'])) , end_section=True)
 
     console.print(table)
     console.print()
