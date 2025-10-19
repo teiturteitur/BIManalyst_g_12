@@ -4,15 +4,18 @@ import ifcopenshell.api.spatial
 import os
 from datetime import datetime
 from .functions import getElementZCoordinate, getLevelElevation, ChangeColor
+from rich.console import Console
+from rich.table import Table
+from rich.prompt import Prompt
 
  
-def ElementLevelChecker(ifc_file = ifcopenshell.open("/Users/teiturheinesen/Library/CloudStorage/OneDrive-SharedLibraries-DanmarksTekniskeUniversitet/Rasmus Niss Kloppenborg - IFC modeller/25-16-D-MEP.ifc"), 
-                        elementType="IfcDuctSegment", colorQuestion=True):
+def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturheinesen/Library/CloudStorage/OneDrive-SharedLibraries-DanmarksTekniskeUniversitet/Rasmus Niss Kloppenborg - IFC modeller/25-08-D-MEP.ifc"), 
+                        targetElements=[], colorQuestion=True):
 
 
 
     # i want to check the distance between the ducts and the floor (level) in the ifc file
-    targetElements = ifc_file.by_type(elementType)
+    targetElements = targetElements
     misplacedElements = [[],[]]
 
 
@@ -106,10 +109,20 @@ def ElementLevelChecker(ifc_file = ifcopenshell.open("/Users/teiturheinesen/Libr
                 
                 
 
-        
-        # else:
-        #     print(f"Could not determine free height for element {element.GlobalId}")
+ 
 
+    # create table of number of misplaced elements
+    table = Table(title="Potentially Misplaced Elements")
+
+    table.add_column("Category", justify="center", style="cyan", no_wrap=True)
+    table.add_column("Count", justify="center", style="magenta")
+
+    table.add_row("Placed on wrong level", str(len(misplacedElements[0])))
+    table.add_row("Placed between levels", str(len(misplacedElements[1])),end_section=True)
+    table.add_row("Total", str(len(misplacedElements[0]) + len(misplacedElements[1])))
+
+    console.print(table)
+    console.print()
 
     return ifc_file, misplacedElements
 

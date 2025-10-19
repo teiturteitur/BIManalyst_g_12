@@ -1,6 +1,7 @@
 import ifcopenshell
 import ifcopenshell.geom
 import ifcopenshell.api.spatial
+import numpy as np
 
 
 def getLevelElevation(ifc_file, element):
@@ -28,6 +29,8 @@ def getElementZCoordinate(element):
     else:
         print("No vertices found for element")
         return None
+
+
 
 def ChangeColor(ifc_file, element, colorChoice):
 
@@ -66,5 +69,4 @@ def ChangeColor(ifc_file, element, colorChoice):
         Styles=[surface_style],
         Name=None
     )
-    # print(f"Element {element.GlobalId} colored {color.Name}.")
    
