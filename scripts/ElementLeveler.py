@@ -3,7 +3,7 @@ import ifcopenshell.geom
 import ifcopenshell.api.spatial
 import os
 from datetime import datetime
-from .functions import getElementZCoordinate, getLevelElevation, ChangeColor
+from .functions import getLevelElevation, ChangeColor, get_element_bbox
 from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt
@@ -12,7 +12,16 @@ from rich.prompt import Prompt
 def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturheinesen/Library/CloudStorage/OneDrive-SharedLibraries-DanmarksTekniskeUniversitet/Rasmus Niss Kloppenborg - IFC modeller/25-08-D-MEP.ifc"), 
                         targetElements=[], colorQuestion=True):
 
+    '''
+    Input: ifc_file - ifcopenshell opened ifc file
+           targetElements - list of ifc elements to check levels for
+            colorQuestion - [DEPRECATED] boolean, if True, ask user if they want to color misplaced elements
 
+    Output: ifc_file - ifcopenshell ifc file with corrected levels and colored misplaced elements (if colorQuestion=True)
+            misplacedElements - dictionary with misplaced elements information
+                misplacedElements = {'wrongLevel': {element.GlobalId: {element, other information, ...}},
+                                    'betweenLevels': {element.GlobalId: {element, other information, ...}}}
+    '''
 
     # i want to check the distance between the ducts and the floor (level) in the ifc file
     targetElements = targetElements
@@ -31,7 +40,9 @@ def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturhein
 
     elementCounter = 0
     for element in targetElements:
-        minZ, maxZ = getElementZCoordinate(element=element)
+        bbox = get_element_bbox(element=element)
+        minZ = bbox["min"][2]
+        maxZ = bbox["max"][2]
         level, levelName = getLevelElevation(ifc_file= ifc_file, element=element)
 
         levelCounter = 1
@@ -59,7 +70,7 @@ def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturhein
                                 ChangeColor(ifc_file=ifc_file, element=element, colorChoice='Y')
 
                             misplacedElements['wrongLevel'][element.GlobalId] = {
-                                'elementID': element.GlobalId,
+                                'element': element,
                                 'elementType': element.is_a(),
                                 'originalLevel': levelName,
                                 'originalLevelElevation': level,
@@ -80,7 +91,7 @@ def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturhein
                             levelCounter += 1
                             continue
                         else:
-                            # print(f"\n🔝 Element {elementCounter} - Designated level: {round(level,2)} \n Above highest level! Element height: {round(maxZ-minZ,3)}. \n {minZ=} \n {maxZ=} 🔝")
+                            # On top level (and correctly placed)
                             elementCounter += 1
                             break
                     
@@ -95,7 +106,7 @@ def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturhein
                         ifcopenshell.api.spatial.assign_container(ifc_file, products=[element], relating_structure=building)
                     # print(f"⛔ Element {elementCounter} moved to building {building.Name} - between levels. ⛔ \n  ")
                     misplacedElements['betweenLevels'][element.GlobalId] =  {
-                        'elementID': element.GlobalId,
+                        'element': element,
                         'elementType': element.is_a(),
                         'originalLevel': levelName,
                         'originalLevelElevation': level,
@@ -104,6 +115,7 @@ def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturhein
                         'minZ': round(minZ,3),
                         'maxZ': round(maxZ,3)
                     }
+
                     elementCounter += 1
                     break
                 
@@ -124,6 +136,7 @@ def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturhein
     console.print(table)
     console.print()
 
+    # console.print(f'\n Misplaced Elements Details: {misplacedElements} \n') # remove this later
     return ifc_file, misplacedElements
 
 

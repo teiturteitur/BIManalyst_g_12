@@ -1,6 +1,6 @@
 import ifcopenshell
 import ifcopenshell.geom
-from .functions import getElementZCoordinate, getLevelElevation
+from .functions import getLevelElevation, get_element_bbox
 from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt
@@ -14,7 +14,7 @@ def FreeHeightChecker(ifc_file, targetElements=[], minFreeHeight=2.6, colorQuest
     targetElements = targetElements
     
     for element in targetElements:
-        element_z = getElementZCoordinate(element=element)
+        bbox = get_element_bbox(element=element)
         level, name = getLevelElevation(ifc_file=ifc_file,element=element)
         if level is False:
             # element is assigned to building, not a storey
@@ -22,9 +22,9 @@ def FreeHeightChecker(ifc_file, targetElements=[], minFreeHeight=2.6, colorQuest
             targetElements.remove(element)
             continue
         else:
-            if element_z is not None and level is not None:
+            if bbox is not None and level is not None:
                 # print(f"{element.GlobalId}: {element_z} m - Level: {round(level,2)} m")
-                free_height = element_z[0] - level
+                free_height = bbox['min'][2] - level
                 if FreeHeights.get(name) is None:
                     FreeHeights[name] = free_height, level, element
                 # elif free_height < FreeHeights.get(name)[0]:

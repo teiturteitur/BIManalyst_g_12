@@ -21,6 +21,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt
 import numpy as np
+from .functions import *
 
 
 
@@ -39,19 +40,25 @@ def systemAnalyzer(console, ifc_file, targetSystems='IfcDistributionSystem'):
     for system in ifc_file_systems:
         elements = system.IsGroupedBy[0].RelatedObjects
 
+        # remove IfcDistributionPort from list of elements - as these are not relevant for AHU check
+        elements = [el for el in elements if not el.is_a("IfcDistributionPort")]
+        # console.print(elements)
+        # print(f'{[el.is_a() for el in elements]=}')
+
         uniqueElements = set(elements.is_a() for elements in elements)
         uniqueElementsType = set(elements.ObjectType for elements in elements)
 
         # the AHU element _should_ be an IfcUnitaryEquipment, but in the given ifc files, they are IfcBuildingElementProxy containing 'Geniox' in their names.
         # in the future, this should just create an instance in the BCF file saying that the system is missing an AHU element.
         if any(e and 'IfcUnitaryEquipment' in e for e in uniqueElements):
-            identifiedSystems[system.Name] = {'ElementCount': len(elements), 'Elements': list(uniqueElements), 'ElementIDs': [elements[i].GlobalId for i in range(len(elements))]}
+            identifiedSystems[system.Name] = {'ElementCount': len(elements), 'ElementTypes': list(uniqueElements), 'ElementIDs': [element.GlobalId for element in elements]}
         else:
             # if uniqueElements contains IfcBuildingElementProxy with 'Geniox' in their ObjectType, consider it as having an AHU - remove this in future
             if any('Geniox' in str(e) for e in uniqueElementsType):
-                identifiedSystems[system.Name] = {'ElementCount': len(elements), 'ElementTypes': list(uniqueElements), 'ElementIDs': [elements[i].GlobalId for i in range(len(elements))]}
+                identifiedSystems[system.Name] = {'ElementCount': len(elements), 'ElementTypes': list(uniqueElements), 'ElementIDs': [element.GlobalId for element in elements]}
             else:
-                missingAHUsystems[system.Name] = {'ElementCount': len(elements), 'ElementTypes': list(uniqueElements), 'ElementIDs': [elements[i].GlobalId for i in range(len(elements))]}
+                missingAHUsystems[system.Name] = {'ElementCount': len(elements), 'ElementTypes': list(uniqueElements), 'ElementIDs': [element.GlobalId for element in elements]}
+
 
     # for all identified systems, find the Supply/Return pairs (the systems using the same AHU) and add a new key 'PairedSystem' to the dictionary
     for systemName, info in identifiedSystems.items():
@@ -78,6 +85,7 @@ def systemAnalyzer(console, ifc_file, targetSystems='IfcDistributionSystem'):
 
 
     processed_AHUs = set()
+
     # VI=Supply, VU=Return
     for systemName, info in identifiedSystems.items():
         elements = info.get("ElementIDs", [])
@@ -106,26 +114,7 @@ def systemAnalyzer(console, ifc_file, targetSystems='IfcDistributionSystem'):
     return identifiedSystems, missingAHUsystems
 
 
-def get_element_bbox(element):
-    """Return min/max XYZ coordinates of an IFC element in world coordinates."""
-    settings = ifcopenshell.geom.settings()
-    settings.set(settings.USE_WORLD_COORDS, True)
 
-    shape = ifcopenshell.geom.create_shape(settings, element)
-    verts = np.array(shape.geometry.verts).reshape(-1, 3)
-
-    bbox_min = verts.min(axis=0)
-    bbox_max = verts.max(axis=0)
-
-    return {"min": bbox_min, "max": bbox_max}
-
-# new function should check all air terminals in each system, check if they clash with a space, and if so, add the required air flow to the system.
-# then, check if the ducts in the system are dimensioned correctly for the required air flow    
-def bbox_overlap(b1, b2):
-    return all(
-        b1["min"][i] <= b2["max"][i] and b1["max"][i] >= b2["min"][i]
-        for i in range(3)
-    )
 
 def airTerminalSpaceClashAnalyzer(console, MEP_file_withSpaces, identifiedSystems):
     """Check which air terminals are inside which spaces.
@@ -136,7 +125,7 @@ def airTerminalSpaceClashAnalyzer(console, MEP_file_withSpaces, identifiedSystem
     spaces = [space for space in spaces if 'Area' not in space.LongName]
     spaces = [space for space in spaces if 'Rooftop Terrace' not in space.LongName]
 
-    # Precompute space bounding boxes
+    # space bounding boxes
     space_bboxes = {}
     for space in spaces:
         try:
@@ -149,42 +138,57 @@ def airTerminalSpaceClashAnalyzer(console, MEP_file_withSpaces, identifiedSystem
     unassignedTerminals = {"Supply": [], "Return": []}
 
     for systemName, info in identifiedSystems.items():
-        # console.print(f"\n[bold cyan]Analyzing system {systemName}[/bold cyan]")
+        # analyzing each system
+
+        # identify air terminals
         elements = info.get("ElementIDs", [])
+        # print(f"System {systemName}: {elements}")
         air_terminals = [el for el in elements if MEP_file_withSpaces.by_id(el).is_a("IfcAirTerminal")]
         # console.print(f"System {systemName}: {air_terminals}")
+
         for air_terminal in air_terminals:
+            # print(f'Analyzing air terminal {air_terminal.GlobalId}, {air_terminal=}')
             try:
+                # get bounding box of air terminal
                 at_bbox = get_element_bbox(MEP_file_withSpaces.by_id(air_terminal))
             except Exception as e:
                 console.print(f"[yellow]Skipping air terminal {air_terminal}: {e}[/yellow]")
                 continue
 
+            
             found_space = None
+            # check which space the air terminal bounding box overlaps with
             for sid, sdata in space_bboxes.items():
                 if bbox_overlap(at_bbox, sdata):
                     found_space = sdata["space"]
-                    # console.print(f"✅ Air terminal {air_terminal} inside space {found_space.LongName}")
+                    # air terminal is inside this space
                     break
+                else:
+                    # air terminal not inside this space
+                    continue
 
-            if not found_space:
-                # console.print(f"[bold red]❌ Air terminal {air_terminal} not inside any space[/bold red]")
-                pass
+
+            if not found_space: # unassigned air terminals
+                if 'VU' in systemName:
+                    unassignedTerminals["Return"].append(air_terminal)
+                    continue
+                elif 'VI' in systemName:
+                    unassignedTerminals["Supply"].append(air_terminal)
+                    continue
+
 
             if found_space:
-                if found_space.GlobalId not in spaceTerminals:
+                # console.print(found_space.GlobalId)
+                if found_space.GlobalId not in spaceTerminals.keys():
                     spaceTerminals[found_space.GlobalId] = {"Supply": [], "Return": []}
+                    # console.print(f"Created new entry for space: {found_space.GlobalId}")
+
                 if 'VU' in systemName:
                     spaceTerminals[found_space.GlobalId]["Return"].append(air_terminal)
                 elif 'VI' in systemName:
                     spaceTerminals[found_space.GlobalId]["Supply"].append(air_terminal)
 
-            elif not found_space: # unassigned air terminals
 
-                if 'VU' in systemName:
-                    unassignedTerminals["Return"].append(air_terminal)
-                elif 'VI' in systemName:
-                    unassignedTerminals["Supply"].append(air_terminal)
 
     # create table with space names and number of air terminals in each space - lastly a row with unnassigned air terminals
     table_spaces = Table(title="Air Terminals in Spaces", show_lines=True)
@@ -193,7 +197,7 @@ def airTerminalSpaceClashAnalyzer(console, MEP_file_withSpaces, identifiedSystem
     table_spaces.add_column("Return Air Terminals", style="blue")
 
     for spaceID, terminals in spaceTerminals.items():
-        table_spaces.add_row(MEP_file_withSpaces.by_guid(spaceID).LongName, str(len(terminals.get("Supply", []))), str(len(terminals.get("Return", []))))
+        table_spaces.add_row(spaceID, str(len(terminals.get("Supply", []))), str(len(terminals.get("Return", []))))
 
     # add unassigned row
     table_spaces.add_row("[bold red]Unassigned[/bold red]", str(len(unassignedTerminals.get("Supply", []))), str(len(unassignedTerminals.get("Return", []))))
@@ -201,7 +205,7 @@ def airTerminalSpaceClashAnalyzer(console, MEP_file_withSpaces, identifiedSystem
 
     return spaceTerminals, unassignedTerminals
 
-def spaceAirFlowCalculator(console, MEP_file_withSpaces, spaceTerminals):
+def spaceAirFlowCalculator(console, MEP_file_withSpaces, spaceTerminals, unassignedTerminals):
     """Calculate required air flow for each space based on space.LongName and number of air terminals.
     Returns: A dictionary with space.GlobalId as key and required air flow as values.
     """
@@ -260,6 +264,7 @@ def spaceAirFlowCalculator(console, MEP_file_withSpaces, spaceTerminals):
 
     # get GrossFloorArea from IfcElementQuantity for all spaces
     spaceAreas = {}
+
     for spaceID in spaceTerminals.keys():
         if spaceID == "Unassigned":
             continue
@@ -327,7 +332,21 @@ def spaceAirFlowCalculator(console, MEP_file_withSpaces, spaceTerminals):
             str(len(data['ReturnTerminals'])),
             str(data['ReturnAirFlow'])
         )
+
+    if unassignedTerminals:
+        table_airflows.add_row(
+            "[bold red]Unassigned[/bold red]",
+            "-",
+            "-",
+            "-",
+            str(len(unassignedTerminals.get("Supply", []))),
+            "-",
+            str(len(unassignedTerminals.get("Return", []))),
+            "-"
+        )
+
     console.print(table_airflows)
+
 
 
     return spaceAirFlows
@@ -342,7 +361,7 @@ def spaceAirFlowCalculator(console, MEP_file_withSpaces, spaceTerminals):
 # ifc_file = ifcopenshell.open('/Users/teiturheinesen/Documents/DTU/Advanced BIM/ApocalypseBIM/outputFiles/ElementLeveler_withSpaces.ifc')
 # identifiedSystems, missingAHUsystems = systemAnalyzer(console=console, ifc_file=ifc_file, targetSystems='IfcDistributionSystem')
 
-# spaceTerminals = airTerminalSpaceClashAnalyzer(console=console, MEP_file_withSpaces=ifc_file, identifiedSystems=identifiedSystems)
-# spaceAirFlows = spaceAirFlowCalculator(console=console, MEP_file_withSpaces=ifc_file, spaceTerminals=spaceTerminals)
+# spaceTerminals, unassignedTerminals = airTerminalSpaceClashAnalyzer(console=console, MEP_file_withSpaces=ifc_file, identifiedSystems=identifiedSystems)
+# spaceAirFlows = spaceAirFlowCalculator(console=console, MEP_file_withSpaces=ifc_file, spaceTerminals=spaceTerminals, unassignedTerminals=unassignedTerminals)
 
 

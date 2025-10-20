@@ -17,20 +17,27 @@ def getLevelElevation(ifc_file, element):
         print("No level found for element")
         return None
 
-def getElementZCoordinate(element):
-    # Change ifcopenshell.geom settings to use world coordinates instead of local coordinates
+
+def get_element_bbox(element):
+    """Return min/max XYZ coordinates of an IFC element in world coordinates."""
     settings = ifcopenshell.geom.settings()
     settings.set(settings.USE_WORLD_COORDS, True)
+
     shape = ifcopenshell.geom.create_shape(settings, element)
-    vertices = shape.geometry.verts
-    z_values = vertices[2::3]  # Extract every third value starting from index 2 (z-coordinates)
-    if z_values:
-        return min(z_values), max(z_values)  # Return the minimum and maximum z-coordinate
-    else:
-        print("No vertices found for element")
-        return None
+    verts = np.array(shape.geometry.verts).reshape(-1, 3)
 
+    bbox_min = verts.min(axis=0)
+    bbox_max = verts.max(axis=0)
 
+    return {"min": bbox_min, "max": bbox_max}
+
+# new function should check all air terminals in each system, check if they clash with a space, and if so, add the required air flow to the system.
+# then, check if the ducts in the system are dimensioned correctly for the required air flow    
+def bbox_overlap(b1, b2):
+    return all(
+        b1["min"][i] <= b2["max"][i] and b1["max"][i] >= b2["min"][i]
+        for i in range(3)
+    )
 
 def ChangeColor(ifc_file, element, colorChoice):
 

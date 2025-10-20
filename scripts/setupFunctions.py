@@ -5,7 +5,8 @@ from rich.table import Table
 from rich.prompt import Prompt
 import ifcopenshell
 from ifcopenshell.util.element import copy_deep
-from bcf.v2.bcfxml import BcfXml
+from ifcopenshell.util.file import IfcHeaderExtractor
+from bcf.v3.bcfxml import BcfXml
 import os
 import sys
 import uuid
@@ -23,6 +24,7 @@ def choose_ifc_pair_from_directory(console, directory, extension=".ifc"):
 
     if not files:
         console.print(f"[yellow]⚠️ No {extension} files found in '{directory}'.[/yellow]")
+        console.print(f"[yellow]Please add IFC files ending with '-MEP.ifc' and '-ARCH.ifc' to {directory} and try again.[/yellow]")
         sys.exit(1)
 
     # Group files by prefix before -MEP or -ARCH
@@ -52,6 +54,8 @@ def choose_ifc_pair_from_directory(console, directory, extension=".ifc"):
         arch = "✅ " + groups[prefix]["ARCH"] if "ARCH" in groups[prefix] else "❌ Missing"
         table.add_row(str(i), prefix, mep, arch)
 
+    console.print('\n[bold yellow]Please make sure to select a MEP/ARCH file pair from the list below:[/bold yellow]\n [yellow](A single MEP file can also be used if it contains spaces.)[/yellow]')
+
     console.print()
     console.print(table)
     console.print()
@@ -76,6 +80,18 @@ def choose_ifc_pair_from_directory(console, directory, extension=".ifc"):
             else:
                 console.print("[red]Invalid input. Please enter a valid number or prefix name.[/red]")
                 continue
+        
+        # if arch file missing, check if spaces are in mep file
+        if "ARCH" not in groups[selected_prefix]:
+            mep_file_path = os.path.join(directory, groups[selected_prefix].get("MEP", ""))
+            mep_ifc = ifcopenshell.open(mep_file_path)
+            spaces = mep_ifc.by_type("IfcSpace")
+            if not spaces:
+                console.print(f"[red]The selected ARCH file is missing and no IfcSpaces found in the MEP file '{groups[selected_prefix].get('MEP', '')}'. Please select a different pair.[/red]")
+                continue
+        if "MEP" not in groups[selected_prefix]:
+            console.print(f"[red]The selected MEP file is missing. Please select a different pair.[/red]")
+            continue
 
         # Gather selected files
         mep_path = os.path.join(directory, groups[selected_prefix].get("MEP", ""))
@@ -179,7 +195,8 @@ def iso_now():
 
 def generate_bcf_from_errors(
     console: Console,
-    ifc_file,
+    ifc_file: ifcopenshell.file,
+    ifc_file_path: str,
     misplacedElements: list,
     missingAHUsystems: dict,
     unassignedTerminals: dict,
@@ -193,20 +210,21 @@ def generate_bcf_from_errors(
     """
 
     console.print("🔧 Opening IFC file...")
-    model = ifc_file
-
+    extractor = IfcHeaderExtractor(ifc_file_path)
+    header_info = extractor.extract()
     console.print("📦 Creating new BCF project...")
-    bcf_project = BcfXml.create_new(project_name="HVAC Coordination Issues")
+    bcf_project = BcfXml.create_new(project_name=header_info.get('name'))
 
     # misplaced elements
     console.print("🧱 Adding misplaced element topics...")
-    for category_name, elements in misplacedElements.items():
+    for error_category, elements in misplacedElements.items():
         for guid, e in elements.items():
-            title = f"{category_name}: {e.get('elementType', 'Unknown')}"
+            # print(f'{guid=},{e['element']=}')
+            title = guid
+            # title = f"{error_category}: {e.get('elementType', 'Unknown')}"
             desc_lines = [
-                f"Element: {guid}",
-                f"Type: {e.get('elementType', 'Unknown')}",
-                f"Issue Category: {category_name}",
+                f"Element Type: {e.get('elementType', 'Unknown')}",
+                f"Issue Category: {error_category}",
             ]
 
             # Add more context if fields exist
@@ -226,16 +244,21 @@ def generate_bcf_from_errors(
                 title=title,
                 description=desc,
                 author="HVAC-Checker",
+                topic_type='Issue',
+                topic_status='Open'
             )
 
-            # if guid:
-            #     topic.add_reference(reference_type="IfcElement", ifc_guid=guid)
+
+            viewpoint = topic.add_viewpoint(e['element'])
+            # viewpoint.set_hidden_elements(['IfcSpace'])  # hide spaces
+            # viewpoint.save()
+
 
 
     # systems missing AHUs
     console.print("💨 Adding missing AHU system topics...")
     for sys_name, info in missingAHUsystems.items():
-        title = f"System {sys_name}: Missing Air Handling Unit"
+        title = f"IfcDistributionSystem - {sys_name}: Missing Air Handling Unit"
         desc = (
             f"The distribution system '{sys_name}' contains {info.get('ElementCount', 0)} elements "
             f"but no AHU (IfcUnitaryUnit) was found.\n"
@@ -244,23 +267,34 @@ def generate_bcf_from_errors(
         topic = bcf_project.add_topic(
             title=title,
             description=desc,
-            author="HVAC-Checker"
+            author="HVAC-Checker",
+            topic_type='Issue',
+            topic_status='Open'
         )
-        # # Optionally link one representative element
-        # if info.get("ElementIDs"):
-        #     topic.add_reference(reference_type="IfcElement", ifc_guid=info["ElementIDs"][0])
+
+        systemElements = info.get('Elements', [])
+        if systemElements:
+            viewpoint = topic.add_viewpoint(systemElements[0]) # all elements in the system
+            # viewpoint.set_hidden_elements(['IfcSpace'])  # hide spaces
+            viewpoint.set_selected_elements([e for e in systemElements])
+            # viewpoint.save()
 
     # unassigned air terminals
     console.print("🌬️ Adding unassigned terminal topics...")
-    for flow_dir, guid_list in unassignedTerminals.items():
-        for guid in guid_list:
-            title = f"Air terminal not placed in a space ({flow_dir})"
-            desc = f"Air terminal {guid} with flow direction '{flow_dir}' is not located inside an IfcSpace."
+    for flow_dir, element_list in unassignedTerminals.items():
+        for element in element_list:
+            title = f"Air terminal not placed inside a space ({flow_dir})"
+            desc = f"Air terminal {element} with flow direction '{flow_dir}' is not located inside an IfcSpace."
             topic = bcf_project.add_topic(
-                title=guid,
+                title=title,
                 description=desc,
-                author="HVAC-Checker"
+                author="HVAC-Checker",
+                topic_type='Issue',
+                topic_status='Open'
             )
+            viewpoint = topic.add_viewpoint(ifc_file.by_id(element))
+            # viewpoint.set_hidden_elements(['IfcSpace'])  # hide spaces
+            # viewpoint.save()
             # topic.add_reference(reference_type="IfcElement", ifc_guid=guid)
 
     # save the BCF file

@@ -4,31 +4,24 @@ ELEMENT LEVELER + FREE HEIGHT CHECKER
 
 Version: 22/09/2025
 
-The following script takes an element type as input (e.g. IfcDuctSegment) 
+The following script 
 and checks if it is defined on the correct level in the IFC file. 
 
 How to use:
-- Load your IFC file by changing the path for the ifc_file variable
+- Load your IFC file by uploading it to the "ifcFiles" folder
+    - IMPORTANT: If the MEP file (XXXX-MEP.ifc) does not contain spaces, also upload the corresponding ARCH (XXXX-ARCH.ifc) file containing the spaces
 - Run main.py and follow the instructions in the CLI
-
 
 Future Work:
     small(er) stuff
-    - BCF files instead of text files
+    - Get BCF files to work properly
 
-    - Pick entire systems instead of element types (e.g. the whole duct system including fittings and air terminals)
-
-    - create simple UI or pop-up window to select the IFC file and element type 
-
-    - send notification/email to responsible person when elements in BCF file are assigned to them (IFCPERSON)
+    - we dont need to merge spaces from ARCH file. just load both files and use spaces from there directly
+    
+    - send notification/email to responsible person when elements in BCF file are assigned to them (IFCPERSON)?
 
     
     big stuff
-    - Import spaces from ARCH IFC model and do clash detection with MEP elements to determine placements of elements
-
-    - check ifcopenshell.IfcDistributionElement.HasPorts to make sure that all elements are connected
-
-    - for each space, calculate the required air flow according to space type/usage etc.
 
     - if a space contains air terminals, divide the required air flow between them and do the following:
         - for each air terminal in each space, check connected duct/fitting and add the required air flow to it
@@ -58,7 +51,7 @@ if __name__ == "__main__":
     console = Console()
     console.print("\n")
     console.print(Panel.fit(
-        "[bold magenta]⭐ IFC ELEMENTLEVELER + FREEHEIGHTCHECKER ⭐[/bold magenta]\n\n[green]Advanced BIM - E25[/green]",
+        "[bold magenta]⭐ IFC HVAC SYSTEM ANALYZER + FREEHEIGHTCHECKER ⭐[/bold magenta]\n\n[green]Advanced BIM - E25[/green]",
         title="[bold yellow]BIManalyst TOOL[/bold yellow]",
         subtitle="by Group 12",
         border_style="cyan"
@@ -71,11 +64,6 @@ if __name__ == "__main__":
 
     # define target elements
     targetElements = setupFunctions.choose_ifcElementType(console, ifcFile=ifc_file, category='MEP-HVAC')
-
-    ########################################################
-    #                   TOOL STARTS HERE                   #
-    ########################################################
-    
 
     # Check element placements in the IFC file
     with console.status("\n[bold green]Checking element placements in the IFC file...", spinner='dots'):
@@ -101,11 +89,11 @@ if __name__ == "__main__":
         spaceTerminals, unassignedTerminals = systemAnalyzer.airTerminalSpaceClashAnalyzer(console=console, MEP_file_withSpaces=ifc_file_withSpaces, identifiedSystems=identifiedSystems)
 
 
-
     with console.status("\n[bold green]Calculating required air flows for spaces...", spinner='dots'):
-        spaceAirFlows = systemAnalyzer.spaceAirFlowCalculator(console=console, MEP_file_withSpaces=ifc_file_withSpaces, spaceTerminals=spaceTerminals)
+        spaceAirFlows = systemAnalyzer.spaceAirFlowCalculator(console=console, MEP_file_withSpaces=ifc_file_withSpaces, spaceTerminals=spaceTerminals, unassignedTerminals=unassignedTerminals)
+    # console.print(f'\n {spaceTerminals=} \n\n {spaceAirFlows=}')
 
-    # console.print(f'\n {misplacedElements=} \n {missingAHUsystems=} \n {unassignedTerminals=}')
+    # console.print(f'\n {misplacedElements=} \n\n {missingAHUsystems=} \n\n {unassignedTerminals=}')
 
     # with console.status("[bold green]Checking free heights in the (corrected) IFC file...", spinner='dots'):
     #     ifc_fileFHC = FreeHeightChecker.FreeHeightChecker(ifc_file=ifc_fileELC, targetElements=targetElements, minFreeHeight=2.6, colorQuestion=False)
@@ -118,6 +106,7 @@ if __name__ == "__main__":
     
     with console.status("\n[bold green]Generating BCF file with issues found...", spinner='dots'):
         setupFunctions.generate_bcf_from_errors(console=console, ifc_file=ifc_file_withSpaces,
+                                                ifc_file_path="outputFiles/" + levelCheckFileName,
                                                 misplacedElements=misplacedElements,
                                                 missingAHUsystems=missingAHUsystems,
                                                 unassignedTerminals=unassignedTerminals,
