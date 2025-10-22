@@ -16,6 +16,9 @@ Future Work:
     small(er) stuff
     - Get BCF files to work properly
 
+    - MAYBE? I DONT KNOW IF THIS IS BETTER: 
+    change bounding box function to use ifcopenshell.util.shape.get_bbox(element) instead of creating geometry each time
+
     - we dont need to merge spaces from ARCH file. just load both files and use spaces from there directly
     
     - send notification/email to responsible person when elements in BCF file are assigned to them (IFCPERSON)?
@@ -74,23 +77,13 @@ if __name__ == "__main__":
     with console.status("\n[bold green]Analyzing building systems in the IFC file...", spinner='dots'):
         identifiedSystems, missingAHUsystems = systemAnalyzer.systemAnalyzer(console=console, ifc_file=ifc_file_levelChecked, targetSystems='IfcDistributionSystem')
 
-
-    # merge spaces into the mep ifc file
-    if not ifc_file_levelChecked.by_type("IfcSpace"):
-        with console.status("\n[bold green]Merging spaces into the MEP IFC file...", spinner='dots'):
-            ifc_file_withSpaces, newSpaces = setupFunctions.merge_spaces_with_quantities_and_structure(console=console, source_ifc=ifc_file_Spaces, target_ifc=ifc_file_levelChecked)
-
-            # save the ifc file with spaces to outputFiles
-            levelCheckFileName = "ElementLeveler_withSpaces.ifc"
-            ifc_file_withSpaces.write("outputFiles/" + levelCheckFileName)
-            # console.print("Element Leveler IFC file with Spaces saved as " + levelCheckFileName)
-
+    # Check what air terminals are in which spaces
     with console.status("\n[bold green]Checking air terminal placements in spaces...", spinner='dots'):
-        spaceTerminals, unassignedTerminals = systemAnalyzer.airTerminalSpaceClashAnalyzer(console=console, MEP_file_withSpaces=ifc_file_withSpaces, identifiedSystems=identifiedSystems)
+        spaceTerminals, unassignedTerminals = systemAnalyzer.airTerminalSpaceClashAnalyzer(console=console, MEP_file=ifc_file_levelChecked, space_file=ifc_file_Spaces, space_file_name='ARCH FILE', identifiedSystems=identifiedSystems)
 
-
+    # Calculate required air flows for each air terminal (located in a space)
     with console.status("\n[bold green]Calculating required air flows for spaces...", spinner='dots'):
-        spaceAirFlows = systemAnalyzer.spaceAirFlowCalculator(console=console, MEP_file_withSpaces=ifc_file_withSpaces, spaceTerminals=spaceTerminals, unassignedTerminals=unassignedTerminals)
+        spaceAirFlows = systemAnalyzer.spaceAirFlowCalculator(console=console, MEP_file=ifc_file_levelChecked, space_file=ifc_file_Spaces, spaceTerminals=spaceTerminals, unassignedTerminals=unassignedTerminals)
     # console.print(f'\n {spaceTerminals=} \n\n {spaceAirFlows=}')
 
     # console.print(f'\n {misplacedElements=} \n\n {missingAHUsystems=} \n\n {unassignedTerminals=}')
@@ -102,11 +95,9 @@ if __name__ == "__main__":
     #     ifc_fileFHC.write("outputFiles/" + FreeHeightFileName)
     #     console.print("Free Height IFC file saved as " + FreeHeightFileName)
 
-    # setupFunctions.writeBCF(console=console, misplacedElements=misplacedElements, missingAHUsystems=missingAHUsystems, unassignedTerminals=unassignedTerminals)
-    
     with console.status("\n[bold green]Generating BCF file with issues found...", spinner='dots'):
-        setupFunctions.generate_bcf_from_errors(console=console, ifc_file=ifc_file_withSpaces,
-                                                ifc_file_path="outputFiles/" + levelCheckFileName,
+        setupFunctions.generate_bcf_from_errors(console=console, ifc_file=ifc_file_levelChecked,
+                                                ifc_file_path=ifc_fileName,
                                                 misplacedElements=misplacedElements,
                                                 missingAHUsystems=missingAHUsystems,
                                                 unassignedTerminals=unassignedTerminals,

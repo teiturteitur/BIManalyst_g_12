@@ -19,7 +19,9 @@ def getLevelElevation(ifc_file, element):
 
 
 def get_element_bbox(element):
-    """Return min/max XYZ coordinates of an IFC element in world coordinates."""
+    """Return min/max XYZ coordinates of an IFC element in world coordinates.
+    I WANT TO CHANGE THIS TO USE ifcopenshell.util.shape.get_bbox(element) insead!
+    """
     settings = ifcopenshell.geom.settings()
     settings.set(settings.USE_WORLD_COORDS, True)
 
@@ -58,11 +60,11 @@ def ChangeColor(ifc_file, element, colorChoice):
         Styles=[ifc_file.create_entity("IfcSurfaceStyleShading", SurfaceColour=color)]
     )
 
-    if not element.Representation:
+    if not ifc_file.by_id(element).Representation:
         print(f"No representation for element {element.GlobalId}")
         return
-    
-    representations = element.Representation.Representations
+
+    representations = ifc_file.by_id(element).Representation.Representations
     if not representations or not representations[0].Items:
         print(f"No items for element {element.GlobalId}")
         return

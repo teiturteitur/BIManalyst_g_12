@@ -5,8 +5,12 @@ from rich.table import Table
 from rich.prompt import Prompt
 import ifcopenshell
 from ifcopenshell.util.element import copy_deep
+import ifcopenshell.util.shape
 from ifcopenshell.util.file import IfcHeaderExtractor
+from .functions import get_element_bbox
 from bcf.v3.bcfxml import BcfXml
+import bcf.v3.visinfo
+import bcf.v3.model
 import os
 import sys
 import uuid
@@ -54,7 +58,7 @@ def choose_ifc_pair_from_directory(console, directory, extension=".ifc"):
         arch = "✅ " + groups[prefix]["ARCH"] if "ARCH" in groups[prefix] else "❌ Missing"
         table.add_row(str(i), prefix, mep, arch)
 
-    console.print('\n[bold yellow]Please make sure to select a MEP/ARCH file pair from the list below:[/bold yellow]\n [yellow](A single MEP file can also be used if it contains spaces.)[/yellow]')
+    console.print('\n[bold yellow]Please make sure to select a MEP/ARCH file pair from the list below:[/bold yellow]')
 
     console.print()
     console.print(table)
@@ -193,6 +197,57 @@ def merge_spaces_with_quantities_and_structure(console, source_ifc, target_ifc):
 def iso_now():
     return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
+def cameraSetup(element: ifcopenshell.entity_instance,
+                ifc_file: ifcopenshell.file) -> tuple[list[float], list[float], list[float]]:
+    print(f'Creating camera setup for element {element.GlobalId}')
+    bbox = get_element_bbox(element)
+    # print(f'{bbox=}')
+    center = [(bbox['min'][i] + bbox['max'][i]) / 2 for i in range(3)]
+
+    camera_view_point = [center[0] + bbox['max'][0]*2, center[1] + bbox['max'][1]*2, center[2] + bbox['max'][2]*2]
+    camera_direction = [center[0] - camera_view_point[0],
+                        center[1] - camera_view_point[1],
+                        center[2] - camera_view_point[2]]
+    camera_up_vector = [0.0, 0.0, 1.0]
+
+    return camera_view_point, camera_direction, camera_up_vector
+
+def add_issue(bcf_obj: BcfXml, title: str, message: str, 
+              author: str, element: ifcopenshell.entity_instance, ifc_file: ifcopenshell.file,
+              bcf_path: str, bcf_zip: bcf.v3.visinfo.ZipFileInterface) -> None:
+    th = bcf_obj.add_topic(
+        title,
+        message,
+        author,
+        "Parameter Validation",
+    )
+    
+    visinfo_handler = th.add_viewpoint(element)
+    # visinfo_handler.create_from_point_and_guids(position=[5,10,1])
+    visinfo_handler.set_selected_elements([element])
+    visinfo_handler.set_visible_elements([element])
+
+    camera_view_point, camera_direction, camera_up_vector = cameraSetup(element=element, ifc_file=ifc_file)
+    visinfo_handler.visualization_info.perspective_camera = bcf.v3.visinfo.build_camera_from_vectors(camera_position=camera_view_point, camera_dir=camera_direction, camera_up=camera_up_vector)
+    print(f'{visinfo_handler.visualization_info.components.selection=}')
+    print(f'{visinfo_handler.visualization_info.components.selection.component=}')
+    # visinfo_handler._save_snapshot(bcf_zip=bcf_zip, topic_dir=th.guid, filename=f'{th.guid}_snapshot.png')
+    # visinfo_handler._save_bitmaps(bcf_zip=bcf_zip, topic_dir=th.guid)
+    # visinfo_handler.save(bcf_zip=bcf_zip, topic_dir=th.guid, vpt=element)
+
+    # visinfo_handler._save_visinfo(bcf_zip=bcf_zip, topic_dir=bcf_path, vp_name=f'{element.is_a()}_viewpoint')
+
+    th.comments = [bcf.v3.model.Comment(
+        guid=str(uuid.uuid4()),
+        date=iso_now(),
+        author=author,
+        comment=message,
+        viewpoint=bcf.v3.model.CommentViewpoint(guid=visinfo_handler.guid),
+    )]
+    # print(f'{vars(th)=}')
+    
+
+
 def generate_bcf_from_errors(
     console: Console,
     ifc_file: ifcopenshell.file,
@@ -200,21 +255,21 @@ def generate_bcf_from_errors(
     misplacedElements: list,
     missingAHUsystems: dict,
     unassignedTerminals: dict,
-    output_bcf: str = "hvac_issues.bcfzip"
-):
+    output_bcf: str = "hvac_issues.bcfzip") -> None:
     """
     Automatically writes a BCF file listing coordination issues:
       - misplacedElements: list of dicts with keys ['elementID', 'elementType', 'originalLevel', 'newLevel', ...]
       - missingAHUsystems: dict keyed by system name with ['ElementCount', 'ElementTypes', 'ElementIDs']
       - unassignedTerminals: dict keyed by flow direction, each containing list of GUIDs
-    """
+    """ 
 
     console.print("🔧 Opening IFC file...")
     extractor = IfcHeaderExtractor(ifc_file_path)
     header_info = extractor.extract()
     console.print("📦 Creating new BCF project...")
     bcf_project = BcfXml.create_new(project_name=header_info.get('name'))
-
+    bcf_project.save(filename=output_bcf, keep_open=True)
+    bcf_zip = bcf_project._zip_file
     # misplaced elements
     console.print("🧱 Adding misplaced element topics...")
     for error_category, elements in misplacedElements.items():
@@ -240,18 +295,19 @@ def generate_bcf_from_errors(
 
             desc = "\n".join(desc_lines)
 
-            topic = bcf_project.add_topic(
-                title=title,
-                description=desc,
-                author="HVAC-Checker",
-                topic_type='Issue',
-                topic_status='Open'
-            )
+            # topic = bcf_project.add_topic(
+            #     title=title,
+            #     description=desc,
+            #     author="HVAC-Checker",
+            #     topic_type='Issue',
+            #     topic_status='Open'
+            # )
 
+            # camera_view_point, camera_direction, camera_up_vector = cameraSetup(element=ifc_file.by_id(guid), ifc_file=ifc_file)
+            # camera = bcf.v3.visinfo.build_camera_from_vectors(camera_position=camera_view_point, camera_dir=camera_direction, camera_up=camera_up_vector)
 
-            viewpoint = topic.add_viewpoint(e['element'])
-            # viewpoint.set_hidden_elements(['IfcSpace'])  # hide spaces
-            # viewpoint.save()
+            add_issue(bcf_obj=bcf_project, title=title, message=desc, author="HVAC-Checker", 
+                      element=ifc_file.by_id(guid), ifc_file=ifc_file, bcf_path=output_bcf, bcf_zip=bcf_zip)
 
 
 
@@ -264,19 +320,20 @@ def generate_bcf_from_errors(
             f"but no AHU (IfcUnitaryUnit) was found.\n"
             f"Types: {info.get('ElementTypes', 'Unknown')}."
         )
-        topic = bcf_project.add_topic(
-            title=title,
-            description=desc,
-            author="HVAC-Checker",
-            topic_type='Issue',
-            topic_status='Open'
-        )
+        # topic = bcf_project.add_topic(
+        #     title=title,
+        #     description=desc,
+        #     author="HVAC-Checker",
+        #     topic_type='Issue',
+        #     topic_status='Open'
+        # )
 
         systemElements = info.get('Elements', [])
         if systemElements:
-            viewpoint = topic.add_viewpoint(systemElements[0]) # all elements in the system
-            # viewpoint.set_hidden_elements(['IfcSpace'])  # hide spaces
-            viewpoint.set_selected_elements([e for e in systemElements])
+            # camera_view_point, camera_direction, camera_up_vector = cameraSetup(element=systemElements[0], ifc_file=ifc_file)
+            # viewpoint = topic.add_viewpoint_from_point_and_guids(position=camera_view_point, guids=systemElements)
+            add_issue(bcf_obj=bcf_project, title=title, message=desc, author="HVAC-Checker", 
+                      element=systemElements, ifc_file=ifc_file, bcf_path=output_bcf, bcf_zip=bcf_zip)
             # viewpoint.save()
 
     # unassigned air terminals
@@ -285,19 +342,27 @@ def generate_bcf_from_errors(
         for element in element_list:
             title = f"Air terminal not placed inside a space ({flow_dir})"
             desc = f"Air terminal {element} with flow direction '{flow_dir}' is not located inside an IfcSpace."
-            topic = bcf_project.add_topic(
-                title=title,
-                description=desc,
-                author="HVAC-Checker",
-                topic_type='Issue',
-                topic_status='Open'
-            )
-            viewpoint = topic.add_viewpoint(ifc_file.by_id(element))
+            
+            # topic = bcf_project.add_topic(
+            #     title=title,
+            #     description=desc,
+            #     author="HVAC-Checker",
+            #     topic_type='Issue',
+            #     topic_status='Open'
+            # )
+
+            # camera_view_point, camera_direction, camera_up_vector = cameraSetup(element, ifc_file)
+            # camera =bcf.v3.visinfo.build_camera_from_vectors(camera_position=camera_view_point, camera_dir=camera_direction, camera_up=camera_up_vector)
+
+            add_issue(bcf_obj=bcf_project, title=title, message=desc, author="HVAC-Checker", 
+                      element=ifc_file.by_id(element), ifc_file=ifc_file, bcf_path=output_bcf, bcf_zip=bcf_zip)
+            # viewpoint = topic.add_viewpoint_from_point_and_guids(position=camera_view_point, guids=[element])
             # viewpoint.set_hidden_elements(['IfcSpace'])  # hide spaces
+            # viewpoint = topic.add_viewpoint(element=ifc_file.by_id(element))
+            # viewpoint.setup_camera(camera_view_point, camera_direction, camera_up_vector)
             # viewpoint.save()
-            # topic.add_reference(reference_type="IfcElement", ifc_guid=guid)
 
     # save the BCF file
-    bcf_project.save(output_bcf)
+    bcf_project.save(filename=output_bcf)
     console.print(f"✅ BCF file successfully written: {output_bcf}")
 

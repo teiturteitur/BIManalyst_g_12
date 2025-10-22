@@ -15,13 +15,14 @@ import ifcopenshell
 import ifcopenshell.util.system
 import ifcopenshell.util.pset
 import ifcopenshell.api
+import ifcopenshell.api.project
 import ifcopenshell.geom
 import os
 from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt
 import numpy as np
-from .functions import *
+from .functions import get_element_bbox, bbox_overlap, ChangeColor
 
 
 
@@ -116,11 +117,16 @@ def systemAnalyzer(console, ifc_file, targetSystems='IfcDistributionSystem'):
 
 
 
-def airTerminalSpaceClashAnalyzer(console, MEP_file_withSpaces, identifiedSystems):
+
+def airTerminalSpaceClashAnalyzer(console: Console, 
+                                         MEP_file: ifcopenshell.file,
+                                         space_file_name: str,
+                                         space_file: ifcopenshell.file, 
+                                         identifiedSystems: dict):
     """Check which air terminals are inside which spaces.
     Returns: A dictionary with space.GlobalId as key and a list of air terminal GlobalIds as values.
     """
-    spaces = MEP_file_withSpaces.by_type("IfcSpace")
+    spaces = space_file.by_type("IfcSpace")
     # spaces with a long name of Area should be ignored
     spaces = [space for space in spaces if 'Area' not in space.LongName]
     spaces = [space for space in spaces if 'Rooftop Terrace' not in space.LongName]
@@ -130,6 +136,9 @@ def airTerminalSpaceClashAnalyzer(console, MEP_file_withSpaces, identifiedSystem
     for space in spaces:
         try:
             bbox = get_element_bbox(space)
+            # add 0.5 to max Z to ensure overlap with more air terminals
+            bbox['max'][2] += 0.5
+            # print(f'Space {space.GlobalId} bbox: {bbox}')
             space_bboxes[space.GlobalId] = {"space": space, **bbox}
         except Exception as e:
             console.print(f"[yellow]Skipping space {space.GlobalId}: {e}[/yellow]")
@@ -143,21 +152,21 @@ def airTerminalSpaceClashAnalyzer(console, MEP_file_withSpaces, identifiedSystem
         # identify air terminals
         elements = info.get("ElementIDs", [])
         # print(f"System {systemName}: {elements}")
-        air_terminals = [el for el in elements if MEP_file_withSpaces.by_id(el).is_a("IfcAirTerminal")]
+        air_terminals = [el for el in elements if MEP_file.by_id(el).is_a("IfcAirTerminal")]
         # console.print(f"System {systemName}: {air_terminals}")
 
         for air_terminal in air_terminals:
             # print(f'Analyzing air terminal {air_terminal.GlobalId}, {air_terminal=}')
             try:
                 # get bounding box of air terminal
-                at_bbox = get_element_bbox(MEP_file_withSpaces.by_id(air_terminal))
+                at_bbox = get_element_bbox(MEP_file.by_id(air_terminal))
             except Exception as e:
                 console.print(f"[yellow]Skipping air terminal {air_terminal}: {e}[/yellow]")
                 continue
 
             
-            found_space = None
             # check which space the air terminal bounding box overlaps with
+            found_space = None
             for sid, sdata in space_bboxes.items():
                 if bbox_overlap(at_bbox, sdata):
                     found_space = sdata["space"]
@@ -189,10 +198,9 @@ def airTerminalSpaceClashAnalyzer(console, MEP_file_withSpaces, identifiedSystem
                     spaceTerminals[found_space.GlobalId]["Supply"].append(air_terminal)
 
 
-
     # create table with space names and number of air terminals in each space - lastly a row with unnassigned air terminals
     table_spaces = Table(title="Air Terminals in Spaces", show_lines=True)
-    table_spaces.add_column("Space Long Name", style="green", no_wrap=True)
+    table_spaces.add_column(f"Space Long Name \n ({space_file_name})", style="green", no_wrap=True)
     table_spaces.add_column("Supply Air Terminals", style="red")
     table_spaces.add_column("Return Air Terminals", style="blue")
 
@@ -205,7 +213,12 @@ def airTerminalSpaceClashAnalyzer(console, MEP_file_withSpaces, identifiedSystem
 
     return spaceTerminals, unassignedTerminals
 
-def spaceAirFlowCalculator(console, MEP_file_withSpaces, spaceTerminals, unassignedTerminals):
+
+def spaceAirFlowCalculator(console: Console, 
+                                  MEP_file: ifcopenshell.file, 
+                                  space_file: ifcopenshell.file,
+                                  spaceTerminals: dict,
+                                  unassignedTerminals: dict):
     """Calculate required air flow for each space based on space.LongName and number of air terminals.
     Returns: A dictionary with space.GlobalId as key and required air flow as values.
     """
@@ -270,7 +283,7 @@ def spaceAirFlowCalculator(console, MEP_file_withSpaces, spaceTerminals, unassig
             continue
         else:
             spaceAreas[spaceID] = 0
-            for rel in getattr(MEP_file_withSpaces.by_guid(spaceID), "IsDefinedBy", []):
+            for rel in getattr(space_file.by_guid(spaceID), "IsDefinedBy", []):
                 propdef = rel.RelatingPropertyDefinition
                 if propdef.is_a("IfcElementQuantity"):
                     for q in propdef.Quantities:
@@ -281,28 +294,36 @@ def spaceAirFlowCalculator(console, MEP_file_withSpaces, spaceTerminals, unassig
                     break
 
     # console.print(f"GrossFloorArea: {spaceAreas}")
-
-    # calculate required air flow per m² for each space type
+    # find amount of chairs in each space in spaceTerminals.keys()
     for spaceID, terminals in spaceTerminals.items():
         if spaceID == "Unassigned":
             continue
-
-        space = MEP_file_withSpaces.by_guid(spaceID)
+        spaceType = space_file.by_guid(spaceID).LongName
         area = spaceAreas.get(spaceID, 0)  # in m²
-        spaceType = space.LongName
+        spaceElements = space_file.by_guid(spaceID).ContainsElements
+        elementsInSpace = [spaceElements[element].RelatedElements for element in range(len(spaceElements))]
+        assumedOccupancy = len([el for el in elementsInSpace[0] if el.is_a("IfcFurniture") and 'Chair' in el.Name])
+        # console.print(f'{len(chairsInSpace)=} in space {space_file.by_id(spaceID).LongName}')
 
-        if spaceType in assumedPersonDensityDict:
-            assumedOccupancy = area / assumedPersonDensityDict[spaceType]
-            requiredAirFlow = (area / assumedPersonDensityDict[spaceType]) * airFlowDict[building_category]['l/s per person'] + (area * airFlowDict[building_category]['l/s per area'])
-        else:
-            # use backup values
-            assumedOccupancy = area / assumedPersonDensityDict['Backup']
-            requiredAirFlow = (area / assumedPersonDensityDict['Backup']) * airFlowDict[building_category]['l/s backup'] + (area * airFlowDict[building_category]['l/s per area'])
+        
+        if assumedOccupancy > 0:
+            requiredAirFlow = (airFlowDict[building_category]['l/s per person'] * assumedOccupancy) + (airFlowDict[building_category]['l/s per area'] * area)
+            pass
+
+        elif assumedOccupancy == 0:
+            console.print(f'[yellow]No chairs found in space {space_file.by_id(spaceID).LongName}[/yellow]')
+            if spaceType in assumedPersonDensityDict:
+                assumedOccupancy = round(spaceAreas.get(spaceID, 0) / assumedPersonDensityDict[spaceType], 2)
+                requiredAirFlow = (spaceAreas.get(spaceID, 0) / assumedPersonDensityDict[spaceType]) * airFlowDict[building_category]['l/s per person'] + (area * airFlowDict[building_category]['l/s per area'])
+            else:
+                # use backup values
+                assumedOccupancy = round(spaceAreas.get(spaceID, 0) / assumedPersonDensityDict['Backup'], 2)
+                requiredAirFlow = (spaceAreas.get(spaceID, 0) / assumedPersonDensityDict['Backup']) * airFlowDict[building_category]['l/s backup'] + (area * airFlowDict[building_category]['l/s per area'])
 
         spaceAirFlows[spaceID] = {
             'SpaceLongName': spaceType,
             'Area_m2': round(area,2),
-            'Assumed_Occupancy': round(assumedOccupancy, 2),
+            'Assumed_Occupancy': assumedOccupancy,
             'RequiredAirFlow_l_s': round(requiredAirFlow, 2),
             'SupplyTerminals': terminals.get("Supply", []),
             'SupplyAirFlow': round(requiredAirFlow / max(1, len(terminals.get("Supply", []))), 2) if terminals.get("Supply", []) else 0,
@@ -355,13 +376,18 @@ def spaceAirFlowCalculator(console, MEP_file_withSpaces, spaceTerminals, unassig
 
 
 
-
 # console = Console()
 
-# ifc_file = ifcopenshell.open('/Users/teiturheinesen/Documents/DTU/Advanced BIM/ApocalypseBIM/outputFiles/ElementLeveler_withSpaces.ifc')
+# space_file_name = '25-10-D-ARCH.ifc'
+
+# ifc_file = ifcopenshell.open('/Users/teiturheinesen/Documents/DTU/Advanced BIM/ApocalypseBIM/ifcFiles/25-10-D-MEP.ifc')
+# space_file = ifcopenshell.open('/Users/teiturheinesen/Documents/DTU/Advanced BIM/ApocalypseBIM/ifcFiles/25-10-D-ARCH.ifc')
+
 # identifiedSystems, missingAHUsystems = systemAnalyzer(console=console, ifc_file=ifc_file, targetSystems='IfcDistributionSystem')
 
-# spaceTerminals, unassignedTerminals = airTerminalSpaceClashAnalyzer(console=console, MEP_file_withSpaces=ifc_file, identifiedSystems=identifiedSystems)
-# spaceAirFlows = spaceAirFlowCalculator(console=console, MEP_file_withSpaces=ifc_file, spaceTerminals=spaceTerminals, unassignedTerminals=unassignedTerminals)
+# spaceTerminals, unassignedTerminals = airTerminalSpaceClashAnalyzer(console=console, MEP_file=ifc_file, space_file_name=space_file_name, space_file=space_file, identifiedSystems=identifiedSystems)
+# spaceAirFlows = spaceAirFlowCalculator(console=console, MEP_file=ifc_file, space_file=space_file, spaceTerminals=spaceTerminals, unassignedTerminals=unassignedTerminals)
 
 
+
+# console.print(spaceAirFlows)
