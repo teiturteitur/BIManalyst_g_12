@@ -199,7 +199,7 @@ def iso_now():
 
 def cameraSetup(element: ifcopenshell.entity_instance,
                 ifc_file: ifcopenshell.file) -> tuple[list[float], list[float], list[float]]:
-    print(f'Creating camera setup for element {element.GlobalId}')
+    # print(f'Creating camera setup for element {element.GlobalId}')
     bbox = get_element_bbox(element)
     # print(f'{bbox=}')
     center = [(bbox['min'][i] + bbox['max'][i]) / 2 for i in range(3)]
@@ -225,12 +225,12 @@ def add_issue(bcf_obj: BcfXml, title: str, message: str,
     visinfo_handler = th.add_viewpoint(element)
     # visinfo_handler.create_from_point_and_guids(position=[5,10,1])
     visinfo_handler.set_selected_elements([element])
-    visinfo_handler.set_visible_elements([element])
+    # visinfo_handler.set_visible_elements([element])
 
     camera_view_point, camera_direction, camera_up_vector = cameraSetup(element=element, ifc_file=ifc_file)
     visinfo_handler.visualization_info.perspective_camera = bcf.v3.visinfo.build_camera_from_vectors(camera_position=camera_view_point, camera_dir=camera_direction, camera_up=camera_up_vector)
-    print(f'{visinfo_handler.visualization_info.components.selection=}')
-    print(f'{visinfo_handler.visualization_info.components.selection.component=}')
+    # print(f'{visinfo_handler.visualization_info.components.selection=}')
+    # print(f'{visinfo_handler.visualization_info.components.selection.component=}')
     # visinfo_handler._save_snapshot(bcf_zip=bcf_zip, topic_dir=th.guid, filename=f'{th.guid}_snapshot.png')
     # visinfo_handler._save_bitmaps(bcf_zip=bcf_zip, topic_dir=th.guid)
     # visinfo_handler.save(bcf_zip=bcf_zip, topic_dir=th.guid, vpt=element)
