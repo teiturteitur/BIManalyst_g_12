@@ -3,6 +3,7 @@ import datetime
 from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt
+from rich import inspect
 import ifcopenshell
 from ifcopenshell.util.element import copy_deep
 import ifcopenshell.util.shape
@@ -195,7 +196,7 @@ def merge_spaces_with_quantities_and_structure(console, source_ifc, target_ifc):
 
 
 def iso_now():
-    return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat() + "Z"
 
 def cameraSetup(element: ifcopenshell.entity_instance,
                 ifc_file: ifcopenshell.file) -> tuple[list[float], list[float], list[float]]:
@@ -204,10 +205,10 @@ def cameraSetup(element: ifcopenshell.entity_instance,
     # print(f'{bbox=}')
     center = [(bbox['min'][i] + bbox['max'][i]) / 2 for i in range(3)]
 
-    camera_view_point = [center[0] + bbox['max'][0]*2, center[1] + bbox['max'][1]*2, center[2] + bbox['max'][2]*2]
-    camera_direction = [center[0] - camera_view_point[0],
-                        center[1] - camera_view_point[1],
-                        center[2] - camera_view_point[2]]
+    camera_view_point = [float(bbox['max'][0]*1.04), float(bbox['max'][1]*1.04), float(bbox['max'][2]*1.075)]
+    camera_direction = [float(center[0] - camera_view_point[0]),
+                       float(center[1] - camera_view_point[1]),
+                       float(center[2] - camera_view_point[2])]
     camera_up_vector = [0.0, 0.0, 1.0]
 
     return camera_view_point, camera_direction, camera_up_vector
@@ -229,13 +230,7 @@ def add_issue(bcf_obj: BcfXml, title: str, message: str,
 
     camera_view_point, camera_direction, camera_up_vector = cameraSetup(element=element, ifc_file=ifc_file)
     visinfo_handler.visualization_info.perspective_camera = bcf.v3.visinfo.build_camera_from_vectors(camera_position=camera_view_point, camera_dir=camera_direction, camera_up=camera_up_vector)
-    # print(f'{visinfo_handler.visualization_info.components.selection=}')
-    # print(f'{visinfo_handler.visualization_info.components.selection.component=}')
-    # visinfo_handler._save_snapshot(bcf_zip=bcf_zip, topic_dir=th.guid, filename=f'{th.guid}_snapshot.png')
-    # visinfo_handler._save_bitmaps(bcf_zip=bcf_zip, topic_dir=th.guid)
-    # visinfo_handler.save(bcf_zip=bcf_zip, topic_dir=th.guid, vpt=element)
-
-    # visinfo_handler._save_visinfo(bcf_zip=bcf_zip, topic_dir=bcf_path, vp_name=f'{element.is_a()}_viewpoint')
+    # inspect(visinfo_handler) # FOR DEBUGGING  
 
     th.comments = [bcf.v3.model.Comment(
         guid=str(uuid.uuid4()),
@@ -244,7 +239,7 @@ def add_issue(bcf_obj: BcfXml, title: str, message: str,
         comment=message,
         viewpoint=bcf.v3.model.CommentViewpoint(guid=visinfo_handler.guid),
     )]
-    # print(f'{vars(th)=}')
+
     
 
 
@@ -275,8 +270,8 @@ def generate_bcf_from_errors(
     for error_category, elements in misplacedElements.items():
         for guid, e in elements.items():
             # print(f'{guid=},{e['element']=}')
-            title = guid
-            # title = f"{error_category}: {e.get('elementType', 'Unknown')}"
+            # title = f'{e.get("elementType", "Unknown")} Element represented on the wrong level: {guid}'
+            title = f"{error_category}: {e.get('elementType', 'Unknown')} representation issue - {guid}"
             desc_lines = [
                 f"Element Type: {e.get('elementType', 'Unknown')}",
                 f"Issue Category: {error_category}",
@@ -294,17 +289,6 @@ def generate_bcf_from_errors(
                 )
 
             desc = "\n".join(desc_lines)
-
-            # topic = bcf_project.add_topic(
-            #     title=title,
-            #     description=desc,
-            #     author="HVAC-Checker",
-            #     topic_type='Issue',
-            #     topic_status='Open'
-            # )
-
-            # camera_view_point, camera_direction, camera_up_vector = cameraSetup(element=ifc_file.by_id(guid), ifc_file=ifc_file)
-            # camera = bcf.v3.visinfo.build_camera_from_vectors(camera_position=camera_view_point, camera_dir=camera_direction, camera_up=camera_up_vector)
 
             add_issue(bcf_obj=bcf_project, title=title, message=desc, author="HVAC-Checker", 
                       element=ifc_file.by_id(guid), ifc_file=ifc_file, bcf_path=output_bcf, bcf_zip=bcf_zip)
@@ -340,8 +324,8 @@ def generate_bcf_from_errors(
     console.print("🌬️ Adding unassigned terminal topics...")
     for flow_dir, element_list in unassignedTerminals.items():
         for element in element_list:
-            title = f"Air terminal not placed inside a space ({flow_dir})"
-            desc = f"Air terminal {element} with flow direction '{flow_dir}' is not located inside an IfcSpace."
+            title = f"Air terminal not placed inside a space - ({element})"
+            desc = f"Air terminal {element} - {flow_dir} is not located inside an IfcSpace."
             
             # topic = bcf_project.add_topic(
             #     title=title,
