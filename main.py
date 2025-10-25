@@ -14,17 +14,14 @@ How to use:
 
 Future Work:
     small(er) stuff
-    - Get BCF files to work properly
-
     - MAYBE? I DONT KNOW IF THIS IS BETTER: 
     change bounding box function to use ifcopenshell.util.shape.get_bbox(element) instead of creating geometry each time
-
-    - we dont need to merge spaces from ARCH file. just load both files and use spaces from there directly
     
     - send notification/email to responsible person when elements in BCF file are assigned to them (IFCPERSON)?
 
-    
     big stuff
+    
+    - convert CLI to TUI (using textual instead of Rich)
 
     - if a space contains air terminals, divide the required air flow between them and do the following:
         - for each air terminal in each space, check connected duct/fitting and add the required air flow to it
