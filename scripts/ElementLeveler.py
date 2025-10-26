@@ -8,9 +8,9 @@ from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt
 
- 
-def ElementLevelChecker(console, ifc_file = ifcopenshell.open("/Users/teiturheinesen/Library/CloudStorage/OneDrive-SharedLibraries-DanmarksTekniskeUniversitet/Rasmus Niss Kloppenborg - IFC modeller/25-08-D-MEP.ifc"), 
-                        targetElements=[], colorQuestion=True):
+
+def ElementLevelChecker(console: Console, ifc_file: ifcopenshell.file, 
+                        targetElements: list[ifcopenshell.entity_instance], colorQuestion: bool) -> tuple[ifcopenshell.file, dict]:
 
     '''
     Input: ifc_file - ifcopenshell opened ifc file

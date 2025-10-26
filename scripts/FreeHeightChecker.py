@@ -7,7 +7,8 @@ from rich.prompt import Prompt
 
 
 
-def FreeHeightChecker(ifc_file, targetElements=[], minFreeHeight=2.6, colorQuestion=True):
+def FreeHeightChecker(ifc_file: ifcopenshell.file, targetElements: list[ifcopenshell.entity_instance], 
+                      minFreeHeight: float = 2.6, colorQuestion: bool = True) -> ifcopenshell.file:
 
     FreeHeights = {}
 

@@ -4,7 +4,7 @@ import ifcopenshell.api.spatial
 import numpy as np
 
 
-def getLevelElevation(ifc_file, element):
+def getLevelElevation(ifc_file: ifcopenshell.file, element: ifcopenshell.entity_instance) -> tuple[float | bool | None, str | None]:
     rels = ifc_file.get_inverse(element)
     for rel in rels:
         if rel.is_a("IfcRelContainedInSpatialStructure"):
@@ -18,7 +18,7 @@ def getLevelElevation(ifc_file, element):
         return None
 
 
-def get_element_bbox(element):
+def get_element_bbox(element: ifcopenshell.entity_instance) -> dict:
     """Return min/max XYZ coordinates of an IFC element in world coordinates.
     I WANT TO CHANGE THIS TO USE ifcopenshell.util.shape.get_bbox(element) insead!
     """
@@ -34,14 +34,14 @@ def get_element_bbox(element):
     return {"min": bbox_min, "max": bbox_max}
 
 # new function should check all air terminals in each system, check if they clash with a space, and if so, add the required air flow to the system.
-# then, check if the ducts in the system are dimensioned correctly for the required air flow    
-def bbox_overlap(b1, b2):
+# then, check if the ducts in the system are dimensioned correctly for the required air flow
+def bbox_overlap(b1: dict, b2: dict) -> bool:
     return all(
         b1["min"][i] <= b2["max"][i] and b1["max"][i] >= b2["min"][i]
         for i in range(3)
     )
 
-def ChangeColor(ifc_file, element, colorChoice):
+def ChangeColor(ifc_file: ifcopenshell.file, element: ifcopenshell.entity_instance, colorChoice: str) -> None:
 
     # Create a red RGB color (values between 0–1)
     colors = {'R': ifc_file.create_entity("IfcColourRgb", Name="Red", Red=1.0, Green=0.0, Blue=0.0),

@@ -26,7 +26,8 @@ from .functions import get_element_bbox, bbox_overlap, ChangeColor
 
 
 
-def systemAnalyzer(console, ifc_file, targetSystems='IfcDistributionSystem'):
+def systemAnalyzer(console: Console, ifc_file: ifcopenshell.file, 
+                   targetSystems: str = 'IfcDistributionSystem') -> tuple[dict, dict]:
 
     # build dictionaries of systems with and without AHUs. 
 
@@ -122,7 +123,7 @@ def airTerminalSpaceClashAnalyzer(console: Console,
                                          MEP_file: ifcopenshell.file,
                                          space_file_name: str,
                                          space_file: ifcopenshell.file, 
-                                         identifiedSystems: dict):
+                                         identifiedSystems: dict) -> tuple[dict, dict]:
     """Check which air terminals are inside which spaces.
     Returns: A dictionary with space.GlobalId as key and a list of air terminal GlobalIds as values.
     """
@@ -218,7 +219,7 @@ def spaceAirFlowCalculator(console: Console,
                                   MEP_file: ifcopenshell.file, 
                                   space_file: ifcopenshell.file,
                                   spaceTerminals: dict,
-                                  unassignedTerminals: dict):
+                                  unassignedTerminals: dict) -> dict:
     """Calculate required air flow for each space based on space.LongName and number of air terminals.
     Returns: A dictionary with space.GlobalId as key and required air flow as values.
     """
@@ -372,22 +373,3 @@ def spaceAirFlowCalculator(console: Console,
 
     return spaceAirFlows
 
-
-
-
-
-# console = Console()
-
-# space_file_name = '25-10-D-ARCH.ifc'
-
-# ifc_file = ifcopenshell.open('/Users/teiturheinesen/Documents/DTU/Advanced BIM/ApocalypseBIM/ifcFiles/25-10-D-MEP.ifc')
-# space_file = ifcopenshell.open('/Users/teiturheinesen/Documents/DTU/Advanced BIM/ApocalypseBIM/ifcFiles/25-10-D-ARCH.ifc')
-
-# identifiedSystems, missingAHUsystems = systemAnalyzer(console=console, ifc_file=ifc_file, targetSystems='IfcDistributionSystem')
-
-# spaceTerminals, unassignedTerminals = airTerminalSpaceClashAnalyzer(console=console, MEP_file=ifc_file, space_file_name=space_file_name, space_file=space_file, identifiedSystems=identifiedSystems)
-# spaceAirFlows = spaceAirFlowCalculator(console=console, MEP_file=ifc_file, space_file=space_file, spaceTerminals=spaceTerminals, unassignedTerminals=unassignedTerminals)
-
-
-
-# console.print(spaceAirFlows)

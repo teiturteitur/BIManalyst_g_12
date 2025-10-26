@@ -48,6 +48,7 @@ from rich.panel import Panel
 
 if __name__ == "__main__":
 
+    start_time = datetime.now()
     console = Console()
     console.print("\n")
     console.print(Panel.fit(
@@ -69,7 +70,6 @@ if __name__ == "__main__":
     with console.status("\n[bold green]Checking element placements in the IFC file...", spinner='dots'):
         ifc_file_levelChecked, misplacedElements = ElementLeveler.ElementLevelChecker(console=console, ifc_file=ifc_file, targetElements=targetElements, colorQuestion=False)
 
-
     # Analyze building systems
     with console.status("\n[bold green]Analyzing building systems in the IFC file...", spinner='dots'):
         identifiedSystems, missingAHUsystems = systemAnalyzer.systemAnalyzer(console=console, ifc_file=ifc_file_levelChecked, targetSystems='IfcDistributionSystem')
@@ -81,9 +81,7 @@ if __name__ == "__main__":
     # Calculate required air flows for each air terminal (located in a space)
     with console.status("\n[bold green]Calculating required air flows for spaces...", spinner='dots'):
         spaceAirFlows = systemAnalyzer.spaceAirFlowCalculator(console=console, MEP_file=ifc_file_levelChecked, space_file=ifc_file_Spaces, spaceTerminals=spaceTerminals, unassignedTerminals=unassignedTerminals)
-    # console.print(f'\n {spaceTerminals=} \n\n {spaceAirFlows=}')
 
-    # console.print(f'\n {misplacedElements=} \n\n {missingAHUsystems=} \n\n {unassignedTerminals=}')
 
     # with console.status("[bold green]Checking free heights in the (corrected) IFC file...", spinner='dots'):
     #     ifc_fileFHC = FreeHeightChecker.FreeHeightChecker(ifc_file=ifc_fileELC, targetElements=targetElements, minFreeHeight=2.6, colorQuestion=False)
@@ -101,4 +99,6 @@ if __name__ == "__main__":
                                                 output_bcf="outputFiles/hvacReport.bcfzip")
 
 
-    console.print("[bold cyan]Done![bold cyan]\n")
+    end_time = datetime.now()
+    elapsed_time = end_time - start_time
+    console.print(f"\n[bold cyan]Done!\nElapsed time: {round(elapsed_time.total_seconds(),2)} seconds[/bold cyan]\n")
