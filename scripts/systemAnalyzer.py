@@ -21,8 +21,12 @@ import os
 from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt
+from rich import inspect
 import numpy as np
-from .functions import get_element_bbox, bbox_overlap, ChangeColor
+from treelib import Tree
+import json
+from functions import get_element_bbox, bbox_overlap, ChangeColor
+# from .functions import get_element_bbox, bbox_overlap, ChangeColor
 
 
 
@@ -116,8 +120,116 @@ def systemAnalyzer(console: Console, ifc_file: ifcopenshell.file,
     return identifiedSystems, missingAHUsystems
 
 
+################
+# Treelib stuff
+################
 
 
+class elementNode:
+    def __init__(self, IfcType: str, airFlow: float):
+        self.IfcType = IfcType
+        self.airFlow = airFlow
+
+    def __str__(self):
+        return f"{self.IfcType} ({self.airFlow})"
+
+
+def build_downstream_tree(element: ifcopenshell.entity_instance, ifc_file: ifcopenshell.file, 
+                                  system_name: str, tree: Tree, parent_id: str, visited: set) -> Tree:
+    """
+    Recursively build a tree structure of connected elements downstream from a given AHU using treelib.
+    Each node contains: GlobalId as identifier, and data with IfcType and airFlow.
+    """
+    visited.add(element.GlobalId)
+    elementNodeData = elementNode(IfcType=element.is_a(), airFlow=0)  # Placeholder for air flow value
+
+    # if parent_id is system_name, set tag to 'AHU' and only add child with same system_name
+    if parent_id == system_name:
+        tag = "AHU"
+        identifier = f'{system_name}_{element.GlobalId}'
+        new_parent_id = identifier
+    else:
+        tag = element.GlobalId
+        identifier = element.GlobalId
+        new_parent_id = identifier
+
+    tree.create_node(
+        tag=tag,
+        identifier=identifier,
+        parent=parent_id,
+        data=elementNodeData
+    )
+
+    # Get all downstream connections
+    if 'VI' in system_name:
+        downstream = ifcopenshell.util.system.get_connected_from(element)
+    elif 'VU' in system_name:
+        downstream = ifcopenshell.util.system.get_connected_to(element)
+
+    # Keep only elements in the same system
+    downstream = [
+        el for el in downstream
+        if system_name in [sys.Name for sys in ifcopenshell.util.system.get_element_systems(el)]
+    ]
+
+    for child in downstream:
+        if child.GlobalId not in visited:
+            build_downstream_tree(child, ifc_file, system_name, tree, new_parent_id, visited)
+
+    return tree
+
+def findSystemTrees(console: Console, identifiedSystems: dict, 
+                    ifc_file: ifcopenshell.file, spaceAirFlows: dict) -> Tree:
+    """
+    Create tree structures for each identified system showing how elements are connected.
+    """
+    systemsTree = Tree()
+    systemsTree.create_node("Systems", "SystemsRoot", data=elementNode(IfcType="Root", airFlow=0))  # give the root a data object with a .type attribute so show(data_property="type") works
+
+
+    for systemName, info in identifiedSystems.items():
+        visited = set()
+
+        # find AHU in system
+        systemAHU_ID = [el for el in info.get("ElementIDs", [])
+                         if ifc_file.by_id(el).is_a("IfcUnitaryEquipment") or 
+                         ('Geniox' in str(ifc_file.by_id(el).ObjectType))]
+        # start at AHU and work downstream
+        systemAHU = ifc_file.by_id(systemAHU_ID[0])
+
+        # tree = build_downstream_tree(systemAHU, ifc_file, systemName, visited)
+        subTree = systemsTree.create_node(systemName, systemName, parent="SystemsRoot", data=elementNode(IfcType=systemAHU.is_a(), airFlow=0))  # root node for the system
+
+        build_downstream_tree(systemAHU, ifc_file, systemName, systemsTree, systemName, visited)
+
+
+
+    # get all paths to air terminals (leaves)
+    all_paths = systemsTree.paths_to_leaves()
+
+    for path in all_paths:
+        pathTerminal = path[-1]
+        requiredAirFlow = 0
+        
+        if 'VI' in ifcopenshell.util.system.get_element_systems(ifc_file.by_id(pathTerminal))[0].Name:
+            # Supply systems
+            # find air terminal in spaceAirFlows to get required air flow
+            for spaceID, data in spaceAirFlows.items():
+                if pathTerminal in [at for at in data.get('SupplyTerminals', [])]:
+                    requiredAirFlow = data.get('SupplyAirFlow', 0)
+                    break
+        elif 'VU' in ifcopenshell.util.system.get_element_systems(ifc_file.by_id(pathTerminal))[0].Name:
+            # Return systems
+            for spaceID, data in spaceAirFlows.items():
+                if pathTerminal in [at for at in data.get('ReturnTerminals', [])]:
+                    requiredAirFlow = data.get('ReturnAirFlow', 0)
+                    break
+        # assign requiredAirFlow to all elements in path EXCEPT the root (systemName)
+        for node_id in path[1:]:
+            systemsTree[node_id].data.airFlow += requiredAirFlow
+
+
+    return systemsTree
 
 def airTerminalSpaceClashAnalyzer(console: Console, 
                                          MEP_file: ifcopenshell.file,
@@ -373,3 +485,22 @@ def spaceAirFlowCalculator(console: Console,
 
     return spaceAirFlows
 
+# mep_file = ifcopenshell.open('/Users/teiturheinesen/Documents/DTU/Advanced BIM/ApocalypseBIM/ifcFiles/25-10-D-MEP.ifc')
+# space_file = ifcopenshell.open('/Users/teiturheinesen/Documents/DTU/Advanced BIM/ApocalypseBIM/ifcFiles/25-10-D-ARCH.ifc')
+# console = Console()
+# identifiedSystems, missingAHUsystems = systemAnalyzer(console, mep_file)
+# spaceTerminals, unassignedTerminals = airTerminalSpaceClashAnalyzer(console, mep_file, '25-10-D-ARCH.ifc', space_file, identifiedSystems)
+# spaceAirFlows = spaceAirFlowCalculator(console, mep_file, space_file, spaceTerminals, unassignedTerminals)
+# # inspect(spaceAirFlows)
+
+# systemsTree = findSystemTrees(console, identifiedSystems, mep_file, spaceAirFlows)
+
+# systemsTree.show(idhidden=False, data_property="airFlow", line_type="ascii-em")
+
+# # systemsTree_json = systemsTree.to_json(with_data=True)
+
+# # save json_systemsTree to file
+# # formatted_json = json.dumps(json.loads(systemsTree.to_json()), indent=2)
+
+# # with open('outputFiles/systemsTree.json', 'w') as f:
+# #     f.write(formatted_json)

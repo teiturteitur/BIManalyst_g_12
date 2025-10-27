@@ -108,7 +108,6 @@ def choose_ifc_pair_from_directory(console: Console, directory: str, extension="
 
         return mep_path or None, arch_path or None
 
-
 def choose_ifcElementType(console: Console, ifcFile: ifcopenshell.file, category='MEP-HVAC') -> list:
 
 
@@ -159,7 +158,6 @@ def choose_ifcElementType(console: Console, ifcFile: ifcopenshell.file, category
     # return a list of catTypes
     return targetElements
 
-
 def copy_space_with_full_metadata(source_space: ifcopenshell.entity_instance, target_ifc: ifcopenshell.file) -> tuple[ifcopenshell.file, ifcopenshell.entity_instance]:
     """Copy an IfcSpace including property and quantity sets."""
     new_space = copy_deep(target_ifc, source_space)
@@ -180,7 +178,6 @@ def copy_space_with_full_metadata(source_space: ifcopenshell.entity_instance, ta
 
     return target_ifc, new_space
 
-
 def merge_spaces_with_quantities_and_structure(console: Console, 
                                                source_ifc: ifcopenshell.file, 
                                                target_ifc: ifcopenshell.file) -> tuple[ifcopenshell.file, list]:
@@ -194,8 +191,6 @@ def merge_spaces_with_quantities_and_structure(console: Console,
 
     console.print(f"Copied {len(copied_spaces)} spaces with quantities.")
     return target_ifc, copied_spaces
-
-
 
 def iso_now() -> str:
     return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat() + "Z"
@@ -245,9 +240,6 @@ def add_issue(bcf_obj: BcfXml, title: str, message: str,
         comment=message,
         viewpoint=bcf.v3.model.CommentViewpoint(guid=visinfo_handler.guid),
     )]
-
-    
-
 
 def generate_bcf_from_errors(
     console: Console,
