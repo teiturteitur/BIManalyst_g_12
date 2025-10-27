@@ -19,14 +19,15 @@ import ifcopenshell.api.project
 import ifcopenshell.geom
 import os
 from rich.console import Console
+from rich.prompt import Prompt
 from rich.table import Table
 from rich.prompt import Prompt
 from rich import inspect
 import numpy as np
 from treelib import Tree
 import json
-from functions import get_element_bbox, bbox_overlap, ChangeColor
-# from .functions import get_element_bbox, bbox_overlap, ChangeColor
+# from functions import get_element_bbox, bbox_overlap, ChangeColor
+from .functions import get_element_bbox, bbox_overlap, ChangeColor
 
 
 
@@ -179,7 +180,7 @@ def build_downstream_tree(element: ifcopenshell.entity_instance, ifc_file: ifcop
     return tree
 
 def findSystemTrees(console: Console, identifiedSystems: dict, 
-                    ifc_file: ifcopenshell.file, spaceAirFlows: dict) -> Tree:
+                    ifc_file: ifcopenshell.file, spaceAirFlows: dict, showChoice=str) -> Tree:
     """
     Create tree structures for each identified system showing how elements are connected.
     """
@@ -201,8 +202,6 @@ def findSystemTrees(console: Console, identifiedSystems: dict,
         subTree = systemsTree.create_node(systemName, systemName, parent="SystemsRoot", data=elementNode(IfcType=systemAHU.is_a(), airFlow=0))  # root node for the system
 
         build_downstream_tree(systemAHU, ifc_file, systemName, systemsTree, systemName, visited)
-
-
 
     # get all paths to air terminals (leaves)
     all_paths = systemsTree.paths_to_leaves()
@@ -228,6 +227,10 @@ def findSystemTrees(console: Console, identifiedSystems: dict,
         for node_id in path[1:]:
             systemsTree[node_id].data.airFlow += requiredAirFlow
 
+
+    if showChoice == 'y':
+
+        systemsTree.show(idhidden=False, data_property="airFlow", line_type="ascii-em")
 
     return systemsTree
 
@@ -495,12 +498,3 @@ def spaceAirFlowCalculator(console: Console,
 
 # systemsTree = findSystemTrees(console, identifiedSystems, mep_file, spaceAirFlows)
 
-# systemsTree.show(idhidden=False, data_property="airFlow", line_type="ascii-em")
-
-# # systemsTree_json = systemsTree.to_json(with_data=True)
-
-# # save json_systemsTree to file
-# # formatted_json = json.dumps(json.loads(systemsTree.to_json()), indent=2)
-
-# # with open('outputFiles/systemsTree.json', 'w') as f:
-# #     f.write(formatted_json)

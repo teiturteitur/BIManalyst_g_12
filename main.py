@@ -44,6 +44,7 @@ from datetime import datetime
 import ifcopenshell
 from rich.console import Console
 from rich.spinner import Spinner
+from rich.prompt import Prompt
 from rich.panel import Panel
 
 if __name__ == "__main__":
@@ -89,6 +90,22 @@ if __name__ == "__main__":
     #     FreeHeightFileName = "FreeHeightChecker.ifc"
     #     ifc_fileFHC.write("outputFiles/" + FreeHeightFileName)
     #     console.print("Free Height IFC file saved as " + FreeHeightFileName)
+
+
+    # ask if user wants to display system tree structure
+    while True:
+
+        showChoice = Prompt.ask('\n Do you want to display the system tree structure? [y/n]').strip().lower()
+        if showChoice not in ['y', 'n']:
+            console.print("[red]Invalid choice. Please enter 'y' or 'n'.[/red]")
+        else:
+            break
+
+
+    with console.status("\n[bold green]Calculating required air flows for spaces...", spinner='dots'):
+        systemsTree = systemAnalyzer.findSystemTrees(console=console, identifiedSystems=identifiedSystems, ifc_file=ifc_file_levelChecked, spaceAirFlows=spaceAirFlows, showChoice=showChoice)
+
+
 
     with console.status("\n[bold green]Generating BCF file with issues found...", spinner='dots'):
         setupFunctions.generate_bcf_from_errors(console=console, ifc_file=ifc_file_levelChecked,
