@@ -3,21 +3,20 @@ import ifcopenshell.geom
 import ifcopenshell.api.spatial
 import os
 from datetime import datetime
-from .functions import getLevelElevation, ChangeColor, get_element_bbox
+from .functions import getLevelElevation, get_element_bbox
 from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt
 
 
 def ElementLevelChecker(console: Console, ifc_file: ifcopenshell.file, 
-                        targetElements: list[ifcopenshell.entity_instance], colorQuestion: bool) -> tuple[ifcopenshell.file, dict]:
+                        targetElements: list[ifcopenshell.entity_instance]) -> tuple[ifcopenshell.file, dict]:
 
     '''
     Input: ifc_file - ifcopenshell opened ifc file
            targetElements - list of ifc elements to check levels for
-            colorQuestion - [DEPRECATED] boolean, if True, ask user if they want to color misplaced elements
 
-    Output: ifc_file - ifcopenshell ifc file with corrected levels and colored misplaced elements (if colorQuestion=True)
+    Output: ifc_file - ifcopenshell ifc file with corrected levels
             misplacedElements - dictionary with misplaced elements information
                 misplacedElements = {'wrongLevel': {element.GlobalId: {element, other information, ...}},
                                     'betweenLevels': {element.GlobalId: {element, other information, ...}}}
@@ -65,10 +64,6 @@ def ElementLevelChecker(console: Console, ifc_file: ifcopenshell.file,
 
                         else:
 
-                            # print(f"\n🟨 Element {elementCounter} - Designated level: {round(level,2)} \n FOUND CORRECT LEVEL! ({val}) Element height: {round(maxZ-minZ,3)}. \n {minZ=} \n {maxZ=} 🟨")
-                            if colorQuestion is True:
-                                ChangeColor(ifc_file=ifc_file, element=element, colorChoice='Y')
-
                             misplacedElements['wrongLevel'][element.GlobalId] = {
                                 'element': element,
                                 'elementType': element.is_a(),
@@ -97,8 +92,6 @@ def ElementLevelChecker(console: Console, ifc_file: ifcopenshell.file,
                     
                 elif minZ < val and maxZ > val: # between two levels!
                     # print(f"\n⛔ Element {elementCounter} - Designated level: {round(level,2)} \n Between two levels! ({val}) Element height: {round(maxZ-minZ,3)}. \n {minZ=} \n {maxZ=} ⛔")
-                    if colorQuestion is True:
-                        ChangeColor(ifc_file=ifc_file, element=element, colorChoice='R')
                     # get current building of element
                     buildings = ifc_file.by_type("IfcBuilding")
                     if buildings:
@@ -120,9 +113,6 @@ def ElementLevelChecker(console: Console, ifc_file: ifcopenshell.file,
                     break
                 
                 
-
- 
-
     # create table of number of misplaced elements
     table = Table(title="Potentially Misplaced Elements")
 

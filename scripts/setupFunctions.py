@@ -203,7 +203,7 @@ def cameraSetup(element: ifcopenshell.entity_instance,
     bbox = get_element_bbox(element)
     center = [(bbox['min'][i] + bbox['max'][i]) / 2 for i in range(3)]
 
-    camera_view_point = [float(bbox['max'][0]*1.04), float(bbox['max'][1]*1.04), float(bbox['max'][2]*1)]
+    camera_view_point = [float(bbox['max'][0]*1.04), float(bbox['max'][1]*1.04), float(bbox['max'][2]*1.04)]
     camera_direction = [float(center[0] - camera_view_point[0]),
                        float(center[1] - camera_view_point[1]),
                        float(center[2] - camera_view_point[2])]

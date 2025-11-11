@@ -10,10 +10,10 @@ All IfcBuildingSystems _CONTAINING_ an AHU element will be further analyzed, to 
 Authors: s214310, s203493, s201348
 '''
 
-
 import ifcopenshell
 import ifcopenshell.util.system
 import ifcopenshell.util.pset
+import ifcopenshell.util.placement
 import ifcopenshell.api
 import ifcopenshell.api.project
 import ifcopenshell.geom
@@ -26,8 +26,9 @@ from rich import inspect
 import numpy as np
 from treelib import Tree
 import json
-# from functions import get_element_bbox, bbox_overlap, ChangeColor
-from .functions import get_element_bbox, bbox_overlap, ChangeColor
+from pressureLossDB import pressure_loss_db
+# from functions import get_element_bbox, bbox_overlap
+from .functions import get_element_bbox, bbox_overlap
 
 
 
@@ -120,6 +121,31 @@ def systemAnalyzer(console: Console, ifc_file: ifcopenshell.file,
 
     return identifiedSystems, missingAHUsystems
 
+def pressureLossAnalyzer(console: Console, ifc_file: ifcopenshell.file, element: ifcopenshell.entity_instance, requiredAirFlow: float, elementDescription: str):
+    '''
+    This function aims to find an estimation of the pressure loss of air flowing through an element in an IFC file.
+    
+    Available elements: Ducts and Fittings
+
+    Input: 
+        console - rich console for printing
+        ifc_file - ifcopenshell opened ifc file
+        element - ifcopenshell entity instance of the element to analyze
+        requiredAirFlow - float, required air flow in l/s
+
+    As of this version, the k value is set to 150 µm and the temperature of the air is 20°C.
+    Furthermore all bends are assumed to be 90 degree bends.
+
+    '''
+
+    if elementDescription == 'Straight Duct':
+        pass
+        
+    # rho = 1.2041  # kg/m3 - density of air at 20°C
+    # v = requiredAirFlow / 1000  # m3/s - convert l/s to m3/s
+    # p_d = 1/2 * rho * v**2 # dynamic pressure
+
+    # reductions
 
 ################
 # Treelib stuff
@@ -127,12 +153,135 @@ def systemAnalyzer(console: Console, ifc_file: ifcopenshell.file,
 
 
 class elementNode:
-    def __init__(self, IfcType: str, airFlow: float):
+    def __init__(self, IfcType: str, airFlow: float, element: ifcopenshell.entity_instance = None, elementID: str = None, prevElementID: str = None, elementPorts: list = None):
+        self.element = element
+        self.elementID = elementID 
         self.IfcType = IfcType
-        self.airFlow = airFlow
+        self.airFlow = airFlow # in l/s
+        self.prevElementID = prevElementID
+        self.elementPorts = elementPorts
+        self.pressureLoss = None # in Pa - to be calculated
+
+
+
+        
+        if element != None:
+            self.elementAreaSolid = self.element.get_info('Representation').get('Representation').get_info('Representations').get('Representations')[0].get_info('Representations').get('Items')[0]
+            self.elementSweptArea = self.elementAreaSolid.get_info('SweptArea').get('SweptArea')
+            self.elementCrossArea, self.elementLength, self.elementDims = self.getElementDims()
+        else:
+            self.elementAreaSolid = None
+            self.elementSweptArea = None
+            self.elementCrossArea = 0
+            self.elementLength = 0
+            self.elementDims = {}
+
+        if not elementPorts:
+            self.portOrientations = []
+        elif len(elementPorts) == 2:
+            # inspect(elementPorts)
+            port1_matrix = ifcopenshell.geom.map_shape(settings=ifcopenshell.geom.settings(), inst=elementPorts[0]).__getattribute__('matrix').components
+            port1 = [port1_matrix[0][3], port1_matrix[1][3], port1_matrix[2][3]]
+            port2_matrix = ifcopenshell.geom.map_shape(settings=ifcopenshell.geom.settings(), inst=elementPorts[1]).__getattribute__('matrix').components
+            port2 = [port2_matrix[0][3], port2_matrix[1][3], port2_matrix[2][3]]
+            # find orientation vector
+            self.portOrientations = self.getOrientationVector(port1=port1, port2=port2)
+
+
+        elif len(elementPorts) > 2:
+            self.portOrientations = []
+            
+        else: 
+            self.portOrientations = []
+
+
 
     def __str__(self):
         return f"{self.IfcType} ({self.airFlow})"
+    
+    def getOrientationVector(self, port1=None, port2=None) -> np.array:
+        # create orientation vector from elementPorts
+        vector = np.array(port2) - np.array(port1)
+        norm = np.linalg.norm(vector)
+        if norm == 0:
+            return np.array([0,0,0])
+        return np.round(vector / norm, 2)
+    
+    def getElementDims(self) -> float:
+        '''
+        Only works for IfcDuctElements with IfcCircleProfileDef or IfcRectangleProfileDef
+        '''
+        if self.element.is_a() not in ['IfcDuctSegment']:
+            # print(f'Element {self.element.is_a()} has unsupported profile definition: {self.elementAreaSolid.is_a()}')
+            # inspect(self.elementAreaSolid)
+            return 0, 0, {}
+        
+        if self.elementSweptArea.is_a() == 'IfcCircleProfileDef':
+            
+            crossArea = np.pi * (self.elementSweptArea.get_info('Radius').get('Radius')/1000)**2 #m2
+            elementLength = round(self.elementAreaSolid.get_info('Depth').get('Depth')/1000, 3)  # m
+            elementDims = {'Diameter_m': round(self.elementSweptArea.get_info('Radius').get('Radius')*2/1000, 3)}
+
+        elif self.elementSweptArea.is_a() == 'IfcRectangleProfileDef':
+            crossArea = min(self.elementSweptArea.get_info('XDim').get('XDim'), self.elementSweptArea.get_info('YDim').get('YDim'))/1000 * self.elementAreaSolid.get_info('Depth').get('Depth')/1000  # m2
+            elementLength = max(self.elementSweptArea.get_info('XDim').get('XDim'), self.elementSweptArea.get_info('YDim').get('YDim'))/1000  # m
+            elementDims = {'Width_m': round(min(self.elementSweptArea.get_info('XDim').get('XDim'), self.elementSweptArea.get_info('YDim').get('YDim'))/1000, 3),
+                           'Height_m': round(self.elementAreaSolid.get_info('Depth').get('Depth')/1000, 3)}
+        
+        else:
+            # print(f'Element has unsupported profile definition: {self.elementAreaSolid.is_a()}')
+            # inspect(self.elementAreaSolid)
+            return 0, 0, {}
+
+
+        return round(crossArea,3), round(elementLength,3), elementDims
+    
+    def pressureLossDuct(self):
+        '''
+        Calculate pressure loss for duct elements.
+        '''
+        if self.IfcType == 'IfcDuctSegment':
+            if self.elementCrossArea == 0 or self.elementLength == 0:
+                # invalid dimensions
+                return None
+
+            # get hydraulic diameter (D_h)
+            if self.elementDims.get('Diameter_m'): 
+                # circular duct
+                D_h = 4 * ((np.pi * self.elementDims.get('Diameter_m')**2)/4) / (np.pi * self.elementDims.get('Diameter_m'))  # m
+
+            elif self.elementDims.get('Width_m') and self.elementDims.get('Height_m'): 
+                # rectangular duct
+                D_h = (2*self.elementDims.get('Height_m')*self.elementDims.get('Width_m')) / (self.elementDims.get('Height_m') + self.elementDims.get('Width_m'))  # m
+
+            # Convert air flow from l/s to m3/s
+            Q = self.airFlow / 1000  # m3/s
+
+            # Calculate velocity (v = Q / A)
+            v = Q / self.elementCrossArea  # m/s
+
+            # Air properties at 20°C
+            rho = 1.2041  # kg/m3
+            mu = 1.81e-5  # Pa.s
+
+            # Calculate Reynolds number (Re = (rho * v * D_h) / mu)
+            Re = (rho * v * D_h) / mu
+
+            # Determine friction factor (f) using the Blasius correlation for turbulent flow
+            if Re < 2000:
+                f_lambda = 64 / (Re+1e-10)  # Laminar flow
+            else:
+                f_lambda = 0.3164 * Re**-0.25  # Turbulent flow
+
+            # dynamic pressure
+            # p_d = 1/2 * rho * v**2 # Pa/m
+            p_d = 0.5 * rho * v**2  # Pa/m
+
+            # Calculate pressure loss (ΔP = f * (p_d/D_h))
+            delta_P = f_lambda * (p_d / D_h)
+
+            self.pressureLoss = round(delta_P * self.elementLength, 2)  # Store pressure loss in Pascals
+
 
 
 def build_downstream_tree(element: ifcopenshell.entity_instance, ifc_file: ifcopenshell.file, 
@@ -142,7 +291,9 @@ def build_downstream_tree(element: ifcopenshell.entity_instance, ifc_file: ifcop
     Each node contains: GlobalId as identifier, and data with IfcType and airFlow.
     """
     visited.add(element.GlobalId)
-    elementNodeData = elementNode(IfcType=element.is_a(), airFlow=0)  # Placeholder for air flow value
+
+    # inspect(ifcopenshell.geom.ShapeType(element))
+    elementNodeData = elementNode(element=element, elementID = element.GlobalId, IfcType=element.is_a(), airFlow=0, prevElementID=parent_id, elementPorts=ifcopenshell.util.system.get_ports(element))  # Placeholder for air flow value
 
     # if parent_id is system_name, set tag to 'AHU' and only add child with same system_name
     if parent_id == system_name:
@@ -161,7 +312,8 @@ def build_downstream_tree(element: ifcopenshell.entity_instance, ifc_file: ifcop
         data=elementNodeData
     )
 
-    # Get all downstream connections
+    # Get all downstream connections 
+    # CHANGE THIS TO: Flow direction!!! is more reliable!! 
     if 'VI' in system_name:
         downstream = ifcopenshell.util.system.get_connected_from(element)
     elif 'VU' in system_name:
@@ -226,6 +378,9 @@ def findSystemTrees(console: Console, identifiedSystems: dict,
         # assign requiredAirFlow to all elements in path EXCEPT the root (systemName)
         for node_id in path[1:]:
             systemsTree[node_id].data.airFlow += requiredAirFlow
+            systemsTree[node_id].data.pressureLossDuct()  # update pressure loss based on new air flow
+
+
 
 
     if showChoice == 'y':
@@ -488,13 +643,17 @@ def spaceAirFlowCalculator(console: Console,
 
     return spaceAirFlows
 
+
 # mep_file = ifcopenshell.open('/Users/teiturheinesen/Documents/DTU/Advanced BIM/ApocalypseBIM/ifcFiles/25-10-D-MEP.ifc')
 # space_file = ifcopenshell.open('/Users/teiturheinesen/Documents/DTU/Advanced BIM/ApocalypseBIM/ifcFiles/25-10-D-ARCH.ifc')
-# console = Console()
-# identifiedSystems, missingAHUsystems = systemAnalyzer(console, mep_file)
-# spaceTerminals, unassignedTerminals = airTerminalSpaceClashAnalyzer(console, mep_file, '25-10-D-ARCH.ifc', space_file, identifiedSystems)
-# spaceAirFlows = spaceAirFlowCalculator(console, mep_file, space_file, spaceTerminals, unassignedTerminals)
-# # inspect(spaceAirFlows)
+# identifiedSystems, missingAHUsystems = systemAnalyzer(console=Console(), ifc_file=mep_file, targetSystems='IfcDistributionSystem')
+# spaceTerminals, unassignedTerminals = airTerminalSpaceClashAnalyzer(console=Console(), MEP_file=mep_file, space_file=space_file, space_file_name='ARCH FILE', identifiedSystems=identifiedSystems)
+# spaceAirFlows = spaceAirFlowCalculator(console=Console(), MEP_file=mep_file, space_file=space_file, spaceTerminals=spaceTerminals, unassignedTerminals=unassignedTerminals)
 
-# systemsTree = findSystemTrees(console, identifiedSystems, mep_file, spaceAirFlows)
+# systemsTree = findSystemTrees(console=Console(), identifiedSystems=identifiedSystems, ifc_file=mep_file, spaceAirFlows=spaceAirFlows, showChoice='n')
+
+
+# systemsTree.show(idhidden=False, data_property="pressureLoss", line_type="ascii-em")
+
+
 

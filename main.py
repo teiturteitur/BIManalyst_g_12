@@ -2,7 +2,7 @@
 '''
 ELEMENT LEVELER + FREE HEIGHT CHECKER
 
-Version: 22/09/2025
+Version: 27/10/2025
 
 The following script 
 and checks if it is defined on the correct level in the IFC file. 
@@ -14,20 +14,26 @@ How to use:
 
 Future Work:
     small(er) stuff
+
     - MAYBE? I DONT KNOW IF THIS IS BETTER: 
-    change bounding box function to use ifcopenshell.util.shape.get_bbox(element) instead of creating geometry each time
+    check if bounding box function should be something like ifcopenshell.util.shape.get_bbox(element) instead of creating geometry each time
+    maybe its better to use ifcopenshell trees? 
+
+    - find a way to check orientation of elements (make vectors from ports!!)
+
+    - make sure that elements are geometrically connected and not just connected by ports
+
+    - make sure that elements are assigned to the same system if they are connected
     
+    - convert sanity checks to IDS? https://www.buildingsmart.org/standards/bsi-standards/information-delivery-specification-ids/
+
     - send notification/email to responsible person when elements in BCF file are assigned to them (IFCPERSON)?
 
     big stuff
-    
-    - convert CLI to TUI (using textual instead of Rich)
 
-    - if a space contains air terminals, divide the required air flow between them and do the following:
-        - for each air terminal in each space, check connected duct/fitting and add the required air flow to it
-        - continue upstream until the main duct is reached (until the duct ends)
-        - when all air terminals have been processed, check if the ducts are correctly dimensioned for the required air flow
-        - if not, make a suggestion in the bcf file
+    - find ifc____profiledef for ducts to get dimensions of ducts. i.e. ifccircularprofiledef, ifcrectangleprofiledef, etc.
+    
+    - make sure each element is dimensioned according to pressure losses and required air flows
 
 
 Authors: s214310, s203493, s201348
@@ -69,7 +75,7 @@ if __name__ == "__main__":
 
     # Check element placements in the IFC file
     with console.status("\n[bold green]Checking element placements in the IFC file...", spinner='dots'):
-        ifc_file_levelChecked, misplacedElements = ElementLeveler.ElementLevelChecker(console=console, ifc_file=ifc_file, targetElements=targetElements, colorQuestion=False)
+        ifc_file_levelChecked, misplacedElements = ElementLeveler.ElementLevelChecker(console=console, ifc_file=ifc_file, targetElements=targetElements)
 
     # Analyze building systems
     with console.status("\n[bold green]Analyzing building systems in the IFC file...", spinner='dots'):
