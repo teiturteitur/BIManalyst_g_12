@@ -416,18 +416,18 @@ class elementNode:
         elif self.IfcType == "IfcDuctFitting":
             if "BU" in str(self.element.get_info("ObjectType").get("ObjectType")):
                 # Bend
-                self.pressureLoss = 10  # Pa
+                self.pressureLoss = 10  # Pa (assumed value)
 
             # if len(self.elementPorts) == 2:
             # PRESSURE LOSS ESTIMATION OF DUCT FITTINGS HAVE NOT BEEN IMPLEMENTED YET!
             # The pressure loss of all duct fittings are therefore assumed to be 0.2 Pa
             else:
                 # not bend
-                self.pressureLoss = 0.2
+                self.pressureLoss = 10  # Pa (assumed value)
 
         elif self.IfcType == "IfcAirTerminal":
             # PRESSURE LOSS ESTIMATION OF AIR TERMINALS IS NOT IMPLEMENTED YET!
-            self.pressureLoss = 0.2
+            self.pressureLoss = 0.2  # Pa (assumed value)
 
 
 def build_downstream_tree(
@@ -784,7 +784,7 @@ def spaceAirFlowCalculator(
         if spaceID == "Unassigned":
             continue
         spaceType = space_file.by_guid(spaceID).LongName
-        area = spaceAreas.get(spaceID, 0)  # in m²
+        area = spaceAreas.get(space.id(), 0)  # in m²
         spaceElements = space_file.by_guid(spaceID).ContainsElements
         elementsInSpace = [
             spaceElements[element].RelatedElements
