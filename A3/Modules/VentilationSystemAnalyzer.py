@@ -314,7 +314,7 @@ def airTerminalSpaceClashAnalyzer(
 
     for spaceID, terminals in spaceTerminals.items():
         table_spaces.add_row(
-            spaceID,
+            space_file.by_guid(spaceID).LongName,
             str(len(terminals.get("Supply", []))),
             str(len(terminals.get("Return", []))),
         )
@@ -773,6 +773,8 @@ def getSystemTrees(
                 systemsTree[node_id].data.pathPressureLoss = round(
                     systemsTree[node_id].data.elementPressureLoss + parent_pl, 2
                 )
+
+            # if systemsTree.data.IfcType == 'IfcDuctSegment':
 
     if showChoice == "y":
         systemsTree.show(

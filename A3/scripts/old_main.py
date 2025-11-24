@@ -2,7 +2,7 @@
 """
 AIR FLOW ESTIMATOR / VENTILATION SYSTEM ANALYZER / BCF GENERATOR
 
-Version: 21/11/25
+Version: 17/11/25
 
 The following project consists of three modules.
 
@@ -30,7 +30,7 @@ The following project consists of three modules.
 
 03_BcfGenerator
     Input:
-        Dictionaries of elements and their corresponding errors.
+        Dictionary of elements and their corresponding errors.
 
     Output:
         BcfXML file.
@@ -65,11 +65,6 @@ Authors: s214310, s203493, s201348
 
 from scripts import ElementLeveler
 from scripts import FreeHeightChecker
-
-from AirflowEstimator.AirFlowEstimator import spaceAirFlowCalculator
-from VentilationSystemAnalyzer.VentilationSystemAnalyzer import *
-from BcfGenerator.BcfGenerator import *
-
 from scripts import setupFunctions
 from scripts import systemAnalyzer
 import os
@@ -79,7 +74,6 @@ from rich.console import Console
 from rich.spinner import Spinner
 from rich.prompt import Prompt
 from rich.panel import Panel
-
 
 if __name__ == "__main__":
     start_time = datetime.now()
@@ -95,60 +89,102 @@ if __name__ == "__main__":
     )
 
     # ask user to choose IFC file pair from directory
-    ifc_filePath, ifc_SpacePath = setupFunctions.choose_ifc_pair_from_directory(
-        console=console, directory="A3/ifcFiles", extension=".ifc"
+    ifc_fileName, ifc_SpaceFile = setupFunctions.choose_ifc_pair_from_directory(
+        console, "ifcFiles", extension=".ifc"
     )
-    ifc_file = ifcopenshell.open(ifc_filePath)
-    space_file_beforeCheck = ifcopenshell.open(ifc_SpacePath)
-    ifc_file_Spaces = spaceAirFlowCalculator(
-        console=console, space_file=space_file_beforeCheck
-    )
+    ifc_file = ifcopenshell.open(ifc_fileName)
+    ifc_file_Spaces = ifcopenshell.open(ifc_SpaceFile)
 
     # define target elements
     targetElements = setupFunctions.choose_ifcElementType(
-        console=console, ifcFile=ifc_file, category="MEP-HVAC"
+        console, ifcFile=ifc_file, category="MEP-HVAC"
     )
 
+    # Check element placements in the IFC file
     with console.status(
-        status="Finding ventilation systems with AHUs...", spinner="dots"
+        "\n[bold green]Checking element placements in the IFC file...", spinner="dots"
     ):
-        identifiedSystems, missingAHUsystems, table_AHUs = ahuFinder(
-            console=console, ifc_file=ifc_file, targetSystems="IfcDistributionSystem"
+        ifc_file_levelChecked, misplacedElements = ElementLeveler.ElementLevelChecker(
+            console=console, ifc_file=ifc_file, targetElements=targetElements
         )
 
+    # Analyze building systems
     with console.status(
-        status="Connecting air terminals with spaces...", spinner="dots"
+        "\n[bold green]Analyzing building systems in the IFC file...", spinner="dots"
     ):
-        spaceTerminals, unassignedTerminals, table_Spaces = (
-            airTerminalSpaceClashAnalyzer(
+        identifiedSystems, missingAHUsystems = systemAnalyzer.systemAnalyzer(
+            console=console,
+            ifc_file=ifc_file_levelChecked,
+            targetSystems="IfcDistributionSystem",
+        )
+
+    # Check what air terminals are in which spaces
+    with console.status(
+        "\n[bold green]Checking air terminal placements in spaces...", spinner="dots"
+    ):
+        spaceTerminals, unassignedTerminals = (
+            systemAnalyzer.airTerminalSpaceClashAnalyzer(
                 console=console,
-                MEP_file=ifc_file,
+                MEP_file=ifc_file_levelChecked,
                 space_file=ifc_file_Spaces,
+                space_file_name="ARCH FILE",
                 identifiedSystems=identifiedSystems,
-                space_file_name="25-10-D-ARCH.ifc",
             )
         )
 
+    # Calculate required air flows for each air terminal (located in a space)
     with console.status(
-        status="Assigning air flows and pressure losses to air terminals..."
+        "\n[bold green]Calculating required air flows for spaces...", spinner="dots"
     ):
-        systemsTree, ifc_file_new = getSystemTrees(
+        spaceAirFlows = systemAnalyzer.spaceAirFlowCalculator(
             console=console,
-            identifiedSystems=identifiedSystems,
-            ifc_file=ifc_file,
+            MEP_file=ifc_file_levelChecked,
             space_file=ifc_file_Spaces,
             spaceTerminals=spaceTerminals,
-            showChoice="y",
+            unassignedTerminals=unassignedTerminals,
         )
 
-    with console.status(status="Generating BCF-file...", spinner="dots"):
-        old_generate_bcf_from_errors(
+    # with console.status("[bold green]Checking free heights in the (corrected) IFC file...", spinner='dots'):
+    #     ifc_fileFHC = FreeHeightChecker.FreeHeightChecker(ifc_file=ifc_fileELC, targetElements=targetElements, minFreeHeight=2.6, colorQuestion=False)
+    #     # save the ifc file to desktop
+    #     FreeHeightFileName = "FreeHeightChecker.ifc"
+    #     ifc_fileFHC.write("outputFiles/" + FreeHeightFileName)
+    # console.print("Free Height IFC file saved as " + FreeHeightFileName)
+
+    # ask if user wants to display system tree structure
+    while True:
+        showChoice = (
+            Prompt.ask("\n Do you want to display the system tree structure? [y/n]")
+            .strip()
+            .lower()
+        )
+        if showChoice not in ["y", "n"]:
+            console.print("[red]Invalid choice. Please enter 'y' or 'n'.[/red]")
+        else:
+            break
+
+    with console.status(
+        "\n[bold green]Calculating required air flows for spaces...", spinner="dots"
+    ):
+        systemsTree = systemAnalyzer.findSystemTrees(
             console=console,
-            ifc_file=ifc_file,
-            ifc_file_path=ifc_filePath,
+            identifiedSystems=identifiedSystems,
+            ifc_file=ifc_file_levelChecked,
+            spaceAirFlows=spaceAirFlows,
+            showChoice=showChoice,
+        )
+
+    with console.status(
+        "\n[bold green]Generating BCF file with issues found...", spinner="dots"
+    ):
+        setupFunctions.generate_bcf_from_errors(
+            console=console,
+            ifc_file=ifc_file_levelChecked,
+            ifc_file_path=ifc_fileName,
+            misplacedElements=misplacedElements,
             missingAHUsystems=missingAHUsystems,
             unassignedTerminals=unassignedTerminals,
-            output_bcf="A3/outputFiles/HVAC_Issues.bcfzip",
+            output_bcf="outputFiles/hvacReport.bcfzip",
         )
 
     end_time = datetime.now()
