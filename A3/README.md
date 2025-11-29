@@ -65,7 +65,8 @@ ___________________________________________________________
 
 ### USAGE
 
-To use this tool, add IFC-file pairs to the ifcFiles directory and then run one of the two main.py files.
+To use this tool, add IFC-file pairs to the ifcFiles directory and then run one of the two main.py files. 
+Example files are in the _unpackThis.zip_ if you want to see how it works :)
 
 1. CLI_main.py
     This file contains a command line UI (CLI) where the user is able to choose the analysed files, the IEQ category and view the analysis results. The user is also able to export the generated BCF- and IFC-files. 
