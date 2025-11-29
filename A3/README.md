@@ -1,5 +1,5 @@
 # A3 – Ventilation Analysis Tool  
-### *Group 10 — Advanced BIM E25*  
+### *Group 12 — Advanced BIM E25*  
 **s214310 · s203493 · s201348**
 
 ---
