@@ -17,7 +17,8 @@ import numpy as np
 def spaceAirFlowCalculator(
     console: Console,
     space_file: ifcopenshell.file,
-):
+    building_category: str | None,
+) -> tuple[ifcopenshell.file, Table]:
     """
     AIR FLOW ESTIMATOR
 
@@ -35,22 +36,24 @@ def spaceAirFlowCalculator(
 
     """
 
-    # ask for user input for which category the building is (cat I, II, III, IV)
-    building_category = console.input(
-        "[bold blue]Enter the building category (I, II, III, IV): [/bold blue]"
-    )
-    building_category = building_category.strip().upper()
-    if building_category not in ["I", "II", "III", "IV"]:
-        console.print(
-            "[bold red]Invalid building category. Defaulting to II.[/bold red]"
+    if building_category == None:
+        # ask for user input for which category the building is (cat I, II, III, IV)
+        building_category = console.input(
+            "[bold blue]Enter the building category (I, II, III, IV): [/bold blue]"
         )
-        building_category = "II"
-    else:
-        console.print(
-            f"[bold green]Building category set to {building_category}.[/bold green]"
-        )
+        building_category = building_category.strip().upper()
+        if building_category not in ["I", "II", "III", "IV"]:
+            console.print(
+                "[bold red]Invalid building category. Defaulting to II.[/bold red]"
+            )
+            building_category = "II"
+        else:
+            console.print(
+                f"[bold green]Building category set to {building_category}.[/bold green]"
+            )
 
-    # building_category = "II"  # default if needed
+    else:
+        building_category = "II"  # default if needed
 
     # According to DS_EN 16798-1:2019
     airFlowDict = {
@@ -114,8 +117,6 @@ def spaceAirFlowCalculator(
         )
         if area is None:
             area = 0
-
-        # console.print(area)
 
         spaceElements = space.ContainsElements
         elementsInSpace = [
@@ -202,10 +203,6 @@ def spaceAirFlowCalculator(
     table_airflows.add_column("Area (m²)", style="cyan")
     table_airflows.add_column("Assumed Occupancy", style="cyan")
     table_airflows.add_column("Required Air Flow (l/s)", style="magenta")
-    # table_airflows.add_column("Supply Terminals", style="red")
-    # table_airflows.add_column("Supply Air Flow (l/s term.)", style="red")
-    # table_airflows.add_column("Return Terminals", style="blue")
-    # table_airflows.add_column("Return Air Flow (l/s term.)", style="blue")
 
     for space in allSpaces:
         if ifcopenshell.util.element.get_pset(
@@ -246,42 +243,5 @@ def spaceAirFlowCalculator(
                 )
             ),
         )
-    # for spaceID, data in spaceAirFlows.items():
-    #     table_airflows.add_row(
-    #         data["SpaceLongName"],
-    #         str(spaceID),
-    #         str(data["Area_m2"]),
-    #         str(data["Assumed_Occupancy"]),
-    #         str(data["RequiredAirFlow_l_s"]),
-    #         # str(len(data["SupplyTerminals"])),
-    #         # str(data["SupplyAirFlow"]),
-    #         # str(len(data["ReturnTerminals"])),
-    #         # str(data["ReturnAirFlow"]),
-    #     )
-
-    # if unassignedTerminals:
-    #     table_airflows.add_row(
-    #         "[bold red]Unassigned[/bold red]",
-    #         "-",
-    #         "-",
-    #         "-",
-    #         str(len(unassignedTerminals.get("Supply", []))),
-    #         "-",
-    #         str(len(unassignedTerminals.get("Return", []))),
-    #         "-",
-    #     )
-
-    # console.print(table_airflows)
 
     return space_file, table_airflows
-
-
-# console = Console()
-# spaceFile = ifcopenshell.open(
-#     "/Users/teiturheinesen/Documents/DTU/Advanced BIM/ApocalypseBIM/A3/ifcFiles/25-10-D-ARCH.ifc"
-# )
-# inspect(spaceFile)
-# new_spaceFile = spaceAirFlowCalculator(console=console, space_file=spaceFile)
-# new_spaceFile.write(
-#     "/Users/teiturheinesen/Documents/DTU/Advanced BIM/ApocalypseBIM/A3/outputFiles/new_25-10-D-ARCH.ifc"
-# )

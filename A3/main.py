@@ -37,7 +37,7 @@ The following project consists of three modules.
 
 
 How to use:
-- Load your IFC file by uploading it to the "ifcFiles" folder
+- Load your IFC file(s) by uploading it to the "ifcFiles" folder
     - IMPORTANT: TWO FILES ARE NEEDED!
         - One xxx_MEP.ifc file containing the ventilation systems
         - One xxx_ARCH.ifc file containing spaces (and furniture for occupancy estimation)
@@ -63,15 +63,17 @@ Authors: s214310, s203493, s201348
 """
 ########################################################
 
-from scripts import ElementLeveler
-from scripts import FreeHeightChecker
+# from scripts import ElementLeveler
+# from scripts import FreeHeightChecker
 
-from AirflowEstimator.AirFlowEstimator import spaceAirFlowCalculator
-from VentilationSystemAnalyzer.VentilationSystemAnalyzer import *
-from BcfGenerator.BcfGenerator import *
+from Modules.AirFlowEstimator import spaceAirFlowCalculator
+from Modules.VentilationSystemAnalyzer import *
+from Modules.BcfGenerator import *
+from Modules.setupFunctions import *
 
-from scripts import setupFunctions
-from scripts import systemAnalyzer
+
+# from scripts import setupFunctions
+# from scripts import systemAnalyzer
 import os
 from datetime import datetime
 import ifcopenshell
@@ -87,7 +89,7 @@ if __name__ == "__main__":
     console.print("\n")
     console.print(
         Panel.fit(
-            "[bold magenta]⭐ IFC HVAC SYSTEM ANALYZER + FREEHEIGHTCHECKER ⭐[/bold magenta]\n\n[green]Advanced BIM - E25[/green]",
+            "[bold magenta]⭐ IFC HVAC SYSTEM ANALYZER ⭐[/bold magenta]\n\n[green]Advanced BIM - E25[/green]",
             title="[bold yellow]BIManalyst TOOL[/bold yellow]",
             subtitle="by Group 12",
             border_style="cyan",
@@ -95,17 +97,17 @@ if __name__ == "__main__":
     )
 
     # ask user to choose IFC file pair from directory
-    ifc_filePath, ifc_SpacePath = setupFunctions.choose_ifc_pair_from_directory(
+    ifc_filePath, ifc_SpacePath = choose_ifc_pair_from_directory(
         console=console, directory="A3/ifcFiles", extension=".ifc"
     )
     ifc_file = ifcopenshell.open(ifc_filePath)
     space_file_beforeCheck = ifcopenshell.open(ifc_SpacePath)
-    ifc_file_Spaces = spaceAirFlowCalculator(
-        console=console, space_file=space_file_beforeCheck
+    ifc_file_Spaces, table_AirFlows = spaceAirFlowCalculator(
+        console=console, space_file=space_file_beforeCheck, building_category="II"
     )
 
     # define target elements
-    targetElements = setupFunctions.choose_ifcElementType(
+    targetElements = choose_ifcElementType(
         console=console, ifcFile=ifc_file, category="MEP-HVAC"
     )
 

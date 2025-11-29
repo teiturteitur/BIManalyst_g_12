@@ -63,16 +63,12 @@ Authors: s214310, s203493, s201348
 """
 ########################################################
 
-from scripts import ElementLeveler
-from scripts import FreeHeightChecker
-
 from Modules.menu import *
-from AirflowEstimator.AirFlowEstimator import spaceAirFlowCalculator
-from VentilationSystemAnalyzer.VentilationSystemAnalyzer import *
-from BcfGenerator.BcfGenerator import *
+from Modules.AirFlowEstimator import spaceAirFlowCalculator
+from Modules.VentilationSystemAnalyzer import *
+from Modules.BcfGenerator import *
+from Modules.setupFunctions import *
 
-from scripts import setupFunctions
-from scripts import systemAnalyzer
 import os
 from datetime import datetime
 import ifcopenshell

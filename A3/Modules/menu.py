@@ -33,7 +33,7 @@ def menuIFCAnalysis(
     console: Console, MEP_file: ifcopenshell.file | None, Space_file: ifcopenshell.file
 ):
     ifc_file_Spaces, table_airflows = spaceAirFlowCalculator(
-        console=console, space_file=Space_file
+        console=console, space_file=Space_file, building_category=None
     )
 
     if MEP_file:
