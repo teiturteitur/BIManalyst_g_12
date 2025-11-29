@@ -1,6 +1,7 @@
 <h1 align='center'> A3 - VENTILATION ANALYSIS TOOL - GROUP 10
 
 > by Group 10 - ADVANCED BIM E25
+
 > s214310, s203493, s201348
 
 ### Introduction and Goal
@@ -60,6 +61,7 @@ Here's a brief explanation of the modules:
 
     All BCF issues are created with camera views and descriptions assigned to them.
 
+___________________________________________________________
 
 ### USAGE
 
@@ -71,6 +73,7 @@ To use this tool, add IFC-file pairs to the ifcFiles directory and then run one 
 2. main.py
     This file contains a more strict pipeline, more aimed towards automated use. As of now, the user still needs to input a choice of which file pairs are analysed, but this can easily be excluded for a more automated use case. 
 
+___________________________________________________________
 
 ### FUTURE WORK
 
