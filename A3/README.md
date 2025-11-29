@@ -1,82 +1,125 @@
-<h1 align='center'> A3 - VENTILATION ANALYSIS TOOL - GROUP 10
+# A3 – Ventilation Analysis Tool  
+### *Group 10 — Advanced BIM E25*  
+**s214310 · s203493 · s201348**
 
-> by Group 10 - ADVANCED BIM E25
+---
 
-> s214310, s203493, s201348
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Module Overview](#module-overview)
+   - [AirflowEstimator.py](#1-airflowestimatorpy)
+   - [VentilationSystemAnalyzer.py](#2-ventilationsystemanalyzerpy)
+   - [BcfGenerator.py](#3-bcfgeneratorpy)
+3. [Usage](#usage)
+4. [Future Work](#future-work)
 
-### Introduction and Goal
+---
 
-This tool aims to be used in the early design phases of HVAC modelling - catching possible errors or oversights made during this design phase.
+## Introduction
 
-The tool consists of three main modules that all work independently, so feel free to replace these as needed :)
+The **Ventilation Analysis Tool** is designed for use in the **early design phases** of HVAC modelling, helping identify errors or oversights during this design phase.
 
-Here's a brief explanation of the modules:
+The tool is composed of **three independent modules** that all work independently, so feel free to replace or add features as needed :)
 
-1. AirflowEstimator.py
-    This module estimates airflows for all spaces present in a given IFC file (i.e. an ARCH IFC-file from the Advanced Building Design (41936) course available at DTU).
+> _Images and diagrams will be added soon._
 
-    The air flows are estimated using the IEQ categories presented in the DS_EN 16798-1:2019 international standard.
+---
 
-    Occupancy is estimated in a couple of ways, according to what data is available in the given IFC file. So in principle, the script performs the following checks and calculates the occupancy accordingly:
-        - If occupancy is assigned as a PSET, use it.
-        - If theres no available PSET, count the amount of chairs in the space and use the number of chairs as design occupancy.
-        - If theres no available PSET and no chairs, use an estimated occupant density (pers./m^2) according to the _space.LongName_ or a backup occupant density. (Backup occupant densitites are from Appendix B in the aforementioned standard)
+## Module Overview
 
-    If the spaces in the given IFC file does not have the following PSETS, they are added and the new analyzed file is saved IFC-file is saved (in OutputFiles).
+### 1. AirflowEstimator.py
+
+This module estimates airflows for all spaces present in a given IFC file (i.e. an ARCH IFC-file from the Advanced Building Design (41936) course available at DTU).
+
+The air flows are estimated using the IEQ categories presented in the **DS_EN 16798-1:2019** international standard.
+
+**Occupancy is determined using the following priority:**
+
+1. Use occupancy if it is defined in a **PSET**.  
+2. If no PSET is available, count the number of **chairs** in each space.  
+3. If neither PSET nor chairs are found, a fallback **occupant density** is estimated using backup densities from *Appendix B in DS/EN 16798-1:2019*
+
+Missing PSETs are automatically added and the updated IFC file is saved in the `OutputFiles` folder.
+
+---
+
+### 2. VentilationSystemAnalyzer.py
 
 
-2. VentilationSystemAnalyzer.py
-    Quite a lot is happening in this module. But we'll try to make it short :) 
+Quite a lot is happening in this module. But we'll try to make it short :) 
     
-    This module aims to analyze all present ventilation systems in a given IFC file and cross-referencing them with the spaces in a matching IFC-file containing spaces (i.e. a MEP and an ARCH IFC-file from the Advanced Building Design (41936) course available at DTU).
+This module aims to analyze all present ventilation systems in a given IFC file and cross-referencing them with the spaces in a matching IFC-file containing spaces (i.e. a MEP and an ARCH IFC-file from the Advanced Building Design (41936) course available at DTU).
 
-    A number of checks are performed, if an element or a system does not pass, the analysis for this element/system does NOT continue and the elements are saved in dictionaries, for BCF generation (but we'll get to that ;) ).
+A number of checks are performed, if an element or a system does not pass, the analysis for this element/system does NOT continue and the elements are saved in dictionaries, for BCF generation (but we'll get to that ;) ).
 
-    These are the checks performed:
+#### Checks performed:
 
-    1. Does an element have an AHU assigned? 
-        If not, the entire system is saved in the _missingAHUsystems_ dictionary.
+1. **AHU Assignment**  
+   - Systems without an AHU are added to the `missingAHUsystems` dictionary.  
+   - Systems containing an AHU are paired with supply/return systems referenced by the same AHU.
 
-        If a system contains an AHU, the supply/return systems are paired (by checking if the AHU.globalID exists in multiple systems) - and the analysis continues!
+2. **Air Terminal Clash Detection**  
+   - Terminals outside any space → added to `unassignedTerminals` dictionary.  
+   - Terminals inside spaces proceed to the next steps.
 
-    2. For all systems containing AHUs, clash detection is performed of the air terminals in the system and the spaces from the matching IFC-file. 
-        If an air terminal is NOT inside a space, they are saved in the _unassignedTerminals_ dictionary.
+#### Analysis steps for passing terminals and systems:
 
-        If an air terminal IS inside a space, the analysis continues!
+3. Divides required airflow (from room PSETs) among terminals within the space.  
+4. Build data trees to visualize airflow branching.  
+5. Calculate pressure loss:
+   
+   Now that the air flow is estimated in all elements in the system, the pressure loss can be calculated. 
+   For duct elements, the pressure loss is found by calculating the hydraulic diameter (according to if the duct is rectangular or round).
 
-    For all air terminals that have passed these checks, the following steps in the analysis are performed:
+   For duct fittings it gets a bit trickier, as they can be a long list of different types of fittings, i.e. duct expansions, bends, T-, and X-fittings.
+   The pressure loss calculations have not been implemented for all fitting types. The ground work has been made, to determine the type of fitting and its IfcDistributionPorts.
 
-    3. For all air terminals in each space (with air terminals) divide the required air flow (from the space PSETs) to the present air terminals.
-    
-    4. For visualization purposes, data trees are built to show how the air flow branches out in the analysed ventilation systems.
 
-    5. LAST STEP! Now that the air flow is estimated in all elements in the system, the pressure loss can be calculated. 
-        For duct elements, the pressure loss is found by calculating the hydraulic diameter (according to if the duct is rectangular or round).
+---
 
-        For duct fittings it gets a bit trickier, as they can be a long list of different types of fittings, i.e. duct expansions, bends, T-, and X-fittings.
-        The pressure loss calculations have not been implemented for all fitting types. The ground work has been made, to determine the type of fitting and its IfcDistributionPorts.
+### 3. BcfGenerator.py
 
-3. BcfGenerator.py
-    This module creates BCF-files for IFC-files from dictionaries with IfcElements (the ones from the previous modules).
+Generates **BCF files** using the issue dictionaries generated by the previous modules.
 
-    All BCF issues are created with camera views and descriptions assigned to them.
+Each issue includes:
+- Camera viewpoints  
+- Descriptions  
+- References to offending IFC elements  
 
-___________________________________________________________
+---
 
-### USAGE
+## Usage
 
-To use this tool, add IFC-file pairs to the ifcFiles directory and then run one of the two main.py files. 
-Example files are in the _unpackThis.zip_ if you want to see how it works :)
+1. Clone/download the repo and open it as working directory :)
 
-1. CLI_main.py
-    This file contains a command line UI (CLI) where the user is able to choose the analysed files, the IEQ category and view the analysis results. The user is also able to export the generated BCF- and IFC-files. 
+2. Add your IFC-files to the `ifcFiles/` folder
 
-2. main.py
-    This file contains a more strict pipeline, more aimed towards automated use. As of now, the user still needs to input a choice of which file pairs are analysed, but this can easily be excluded for a more automated use case. 
+_We used the uv package manager (<https://docs.astral.sh/uv/>) to keep track of dependencies!_
 
-___________________________________________________________
+_If you have not tried uv before and would like to give it a shot, do the following:_
 
-### FUTURE WORK
+3. Follow the installation guide at <https://docs.astral.sh/uv/getting-started/installation/>
+
+4. Create a virtual environment using uv
+
+   ```uv init```
+
+5. Add dependencies using uv
+
+   ```uv add -r requirements.txt```
+
+6. Run the code using uv!
+
+   ```uv run main.py```
+   
+   or if you want to use the command line interface:
+
+   ```uv run CLI_main.py```
+   
+
+Make sure your IFC files are placed in the `ifcFiles/` directory before running the scripts.
+
+### Future Work
 
 - Pressure loss estimation of duct fittings and air terminals
 - Compatability with different IFC-file types. 
