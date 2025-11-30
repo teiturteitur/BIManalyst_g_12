@@ -21,6 +21,11 @@ PAGE: 7
 A2c: Use Case
 How you would check this claim?
 
+![image](https://github.com/teiturteitur/ApocalypseBIM/blob/dev_teti/A2/Whole%20use%20case.svg)
+
+![image](https://github.com/teiturteitur/ApocalypseBIM/blob/dev_teti/A2/Scoped%20use%20case.svg)
+
+
 Method (automatic)
 
 The claim is that ceiling heights (free height from floor to lowest element) must be ≥ 2.6 m.
