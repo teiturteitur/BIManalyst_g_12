@@ -4,11 +4,21 @@
 
 ---
 
-Welcome to our Advanced BIM E25 repo!
+## Welcome to our Advanced BIM E25 repo!
+
+## [A2 - Diagrams](A2/)
+## [A3 - Tool: IFC Ventilation System Analyzer](A3/)
+## [A4 - Tutorial: Automatic BCF-file generation](A4/)
 
 Please feel free to check our IFC Ventilation System Analyzer Tool out at [A3/](A3/)
 
 You'll find, that we have been a biiit more thorough with our README there ;)
 
-At [A4/](A4/), you'll find our tutoria, where we explain our BCF file generator!
+At [A4/](A4/), you'll find our tutorial, where we explain our BCF file generator!
+
+
+
+
+___
+
 
