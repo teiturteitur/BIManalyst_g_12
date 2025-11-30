@@ -14,6 +14,14 @@
 4. [Future Work](#future-work)
 
 ---
+## Summary
+Title: IFC Ventilation System Analysis - Air Flow and Pressure Loss Estimation
+
+Category: Indoor and Energy
+
+Description: Takes two IFC files (one with IfcSpaces and one with IfcDistributionSystems), estimates the required air flow and resulting pressure loss for the ventilation system. The tool then assigns the estimations as PSETs and generates a BCF file with possible errors in the ventilation systems.
+
+---
 
 ## Introduction
 
