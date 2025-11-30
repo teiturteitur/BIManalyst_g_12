@@ -21,7 +21,7 @@ The **Ventilation Analysis Tool** is designed for use in the **early design phas
 
 The tool is composed of **three independent modules** that all work independently, so feel free to replace or add features as needed :)
 
-> _Images and diagrams will be added soon._
+![Alt text](pictures/UseCase.svg)
 
 
 https://github.com/user-attachments/assets/eafb40fc-b2a2-4868-8201-dc9f506b6e8a
