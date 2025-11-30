@@ -1,6 +1,14 @@
 # BIManalyst group 12
 
+A2a: About your group
+
 FOCUS AREA: INDOOR AND ENERGY
+
+ROLE: Analysts
+
+We agree (3) that we are confident in coding in python
+
+A2b: Identify Claim
 
 The claim we are checking:
 
@@ -10,55 +18,58 @@ CLAIM: Ceiling heights of at least 2.6m
 REPORT: D_ClientReport_Team16
 PAGE: 7
 
-TOOL DESCRIPTION:
+A2c: Use Case
+How you would check this claim?
 
-Our tool is divided into two parts. 
-- A sanity check _(scripts/ElementLevelChanger.py)_, that makes sure, that all elements are assignet to the correct level.
-- A free height checker _(_scripts/FreeHeightChecker.py)_, for these elements, analyzing the vertical distance between the lowest elements lowest part and the assigned level. 
+Method (automatic)
 
-  ElementLevelChanger.py:
+The claim is that ceiling heights (free height from floor to lowest element) must be ≥ 2.6 m.
 
-A sanity check is performed before analysing the free heights: All elements are checked if they are assigned to the same level as defined. Vertical elements are assigned to the building and not levels.
+The workflow is automated using IfcOpenShell:
 
-Output: A new IFC file, with corrected element representation. Optionally, these elements can be colored in the new IFC file, if specified.
+Sanity check (ElementLeveler): Verify that all elements are assigned to the correct building storey. Vertical elements are moved to the building level. If not correct, they are reassigned with ifcopenshell.api.spatial.assign_container.
 
-If the elements are not in the correct level, they are moved and assigned to the correct level. If the vertical elements are assigned to a level, they are moved and assigned to the building.
+Free height check (FreeHeightChecker): For each storey, calculate the free height as the lowest Z-coordinate of the element minus the storey elevation. Identify the lowest element per storey, compare with the 2.6 m threshold, and color the element red (fail) or yellow (pass).
 
-  FreeHeightChecker.py:
+Outputs: Updated IFC file (with corrected assignments and colors) and a summary report showing minimum free height per storey.
 
-Our script analyzes the free heights (distance from level to lowest point of ducts/air terminals) of all floors/levels in the IFC model.
+When would this claim need to be checked?
 
-Output: an overview and a new IFC file with the lowest elements on each floor colored in red.
+During the design phase, whenever the model is updated (e.g. new MEP elements, layout changes).
 
-HOW TO USE:
-  - Open main.py :)
-  - Load your IFC file by changing the path for the ifc_file variable
-  - Specify the element type you want to check (currently set to IfcDuctSegment)
-  - Run main.py
+At design freeze before handover to the client.
 
+Optionally in the build phase, for as-built verification.
 
-Future Work:
-  - Counter of moved elements and elements with insufficient free height
-  - General statistics report
-  - GUI?
+What information does this claim rely on?
 
-RESULTS:
+IFC model with:
 
-Found Free Heights for 25-16-D-MEP.ifc:
+Defined IfcBuildingStorey entities with correct elevations.
 
-Level 0: 2.62 m (Level: 0.0 m)
+Relevant MEP elements (e.g. IfcDuctSegment, IfcAirTerminal).
 
-Level 1: 2.62 m (Level: 3.67 m)
+Geometric data available for ifcopenshell.geom to extract global Z-coordinates.
 
-Level 2: 2.56 m (Level: 7.34 m)
+Units must be in meters, with USE_WORLD_COORDS=True.
 
-Level 3: 2.87 m (Level: 11.01 m)
+The threshold value (2.6 m, configurable).
 
-Level 4: 2.62 m (Level: 15.11 m)
+What phase? planning, design, build or operation.
 
+Mainly Design, secondarily Build.
 
+What BIM purpose is required? Gather, generate, analyse, communicate or realise?
 
+Analyse: Calculate free heights and detect non-compliance.
+
+Communicate: Provide visual IFC feedback (colored elements) and summary reports.
 
 
+Produce a BPMN drawing for your chosen use case. link to this so we can see it in your markdown file. To do this you will have to save it as an SVG, please also save the BPMN with it.mYou can use this online tool to create a BPMN file.
 
+Scoped use case:
 
+It is chosen to zoom in on the Free Height Check from the whole use case. In the scoped use case it is investigated whether the ventilation shaft systems are dimensioned correctly, as this directly affects the validity of the free height check.
+
+By verifying the shaft dimensions, it is ensured that the calculated free height represents the usable indoor space and that the model complies with both ARCH and MEP requirements. The scoped process is highlighted in the "Whole use case" diagram and described in detail in the "Scoped use case" BPMN diagram.
