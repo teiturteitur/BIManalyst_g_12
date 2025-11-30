@@ -115,7 +115,12 @@ _If you have not tried uv before and would like to give it a shot, do the follow
    or if you want to use the command line interface:
 
    ```uv run CLI_main.py```
-   
+
+
+https://github.com/user-attachments/assets/4ca013fe-2ebe-45fd-893a-5e32188a80ad
+
+
+
 
 Make sure your IFC files are placed in the `ifcFiles/` directory before running the scripts.
 
