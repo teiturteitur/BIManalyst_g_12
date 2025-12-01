@@ -106,6 +106,7 @@ Each issue includes:
 1. Clone/download the repo and open it as working directory :)
 
 2. Add your IFC-files to the `ifcFiles/` folder
+   (you can also use the files in the ifcFiles copy folder)
 
 _We used the uv package manager (<https://docs.astral.sh/uv/>) to keep track of dependencies!_
 
