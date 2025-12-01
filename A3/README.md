@@ -109,7 +109,7 @@ Each issue includes:
 
    _We have put a zip-file with an ARCH and MEP file if you want to test it out!
 
-   _(You can also use the files in the [`ifcFiles copy/`](<ifcFiles copy/>) folder)_
+   _(You can also get the example files from the [`ifcFiles copy/`](<ifcFiles copy/>) folder, but you still need to move them over)_
 
 _We used the uv package manager (<https://docs.astral.sh/uv/>) to keep track of dependencies!_
 
