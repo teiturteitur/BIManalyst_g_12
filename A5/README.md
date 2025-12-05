@@ -22,7 +22,7 @@ Yes, the tool succeeded to address the use case we identified ...
 
 ## Katrine
 
-#### Your learning experience for the concept you focused on.**
+### Your learning experience for the concept you focused on.
 
 **Identify your own level at the beginning of this course and where you ended**
 
@@ -33,7 +33,7 @@ Yes, the tool succeeded to address the use case we identified ...
 **How you might use OpenBIM in the future?**
 
 
-#### Your process of developing the tutorial
+### Your process of developing the tutorial
 
 **Did the process of the course enable you to answer or define questions that you might need later for thesis?**
 
@@ -41,7 +41,7 @@ Yes, the tool succeeded to address the use case we identified ...
 
 **Was the number of tools for the course ok - should we have more or less? - if so which ones would you leave out?**
 
-#### Your future for Advanced use of OpenBIM
+### Your future for Advanced use of OpenBIM
 
 **are you likely to use OpenBIM tools in your thesis?**
 
