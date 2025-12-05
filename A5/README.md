@@ -1,3 +1,5 @@
+# Group reflection
+
 ## Summary of feedback on our tool
 
 Overall, the feedback on our tool was very positive. The other groups found it useful and liked the clarity provided in the README and the video we included. At the same time, they also pointed out areas where the tool could be expanded or improved in the future. 
@@ -10,9 +12,37 @@ We also received suggestions about expanding the tool to handle flowsegments or 
 
 **Did the tool address the use case we identified?**
 
-Yes, the tool succeeded to address the use case we identified, which was: 
+Yes, the tool succeeded to address the use case we identified ... 
 
 
 **What stage does the tool you created work in Advanced Building Design (stage A, B, C and/ or D)?**
 
 
+# Individual reflections
+
+## Katrine
+
+#### Your learning experience for the concept you focused on.**
+
+**Identify your own level at the beginning of this course and where you ended**
+
+
+**What else do you still need to learn?**
+
+
+**How you might use OpenBIM in the future?**
+
+
+#### Your process of developing the tutorial
+
+**Did the process of the course enable you to answer or define questions that you might need later for thesis?**
+
+**Would you have preferred to have been given less choice in the use cases?**
+
+**Was the number of tools for the course ok - should we have more or less? - if so which ones would you leave out?**
+
+#### Your future for Advanced use of OpenBIM
+
+**are you likely to use OpenBIM tools in your thesis?**
+
+**are you likely to use OpenBIM tools in your professsional life in the next 10 years?**
