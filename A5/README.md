@@ -11,3 +11,8 @@ We also received suggestions about expanding the tool to handle flowsegments or 
 **Did the tool address the use case we identified?**
 
 Yes, the tool succeeded to address the use case we identified, which was: 
+
+
+**What stage does the tool you created work in Advanced Building Design (stage A, B, C and/ or D)?**
+
+
