@@ -20,15 +20,13 @@ Yes, the tool succeeded to address the use case we identified ...
 
 # Individual reflections
 
-## Katrine
+## Katrine Aarup Nielsen - s214310
 
 ### Your learning experience for the concept you focused on.
 
 **Identify your own level at the beginning of this course and where you ended**
 
-
 **What else do you still need to learn?**
-
 
 **How you might use OpenBIM in the future?**
 
