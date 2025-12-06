@@ -61,7 +61,6 @@ I feel like I ended up as a _Self Learner_, as I spent so much time learning abo
 
 ### Your process of developing the tutorial
 
-- Did the process of the course enable you to answer or define questions that you might need later for thesis?
 Develoing the tool and tutorial definitely opened some new doors, that I'll be able to use for my thesis. 
 
 I really liked being able to choose your own case and being able and it motivated me a lot during the course. That being said, I think some groups would gain a lot from having more strictly defined cases so they more easily could see the posibilities there is in the IFC format. I felt a bit like an outsider because I wanted to spend time learning about the IFC format and wanting to provide a useful tool.
