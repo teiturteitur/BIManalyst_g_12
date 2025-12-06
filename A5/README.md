@@ -32,12 +32,6 @@ In the future, I would like to use BIM more actively to check models in the proc
 
 ### Your process of developing the tutorial
 
-**Did the process of the course enable you to answer or define questions that you might need later for thesis?**
-
-**Would you have preferred to have been given less choice in the use cases?**
-
-**Was the number of tools for the course ok - should we have more or less? - if so which ones would you leave out?**
-
 The process of developing the tutorial helped me understand what we were building and why each step mattered. Writing things down made the workflow more concrete, and it also showed me which parts I understood well and which parts needed more clarification. In that way, the course process helped me define possible questions to explore later, such as how automated model checking could be integrated into design workflows, which is something I could potentially use in my thesis. 
 
 I think the freedom we had in choosing our own use case was good. It allowed us to work with something we found interesting, which made the project more motivating. It also gave us space to explore and expand the use case throughout the process, instead of being locked into something fixed from the beginning. 
