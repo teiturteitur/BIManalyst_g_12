@@ -24,12 +24,11 @@ Yes, the tool succeeded to address the use case we identified ...
 
 ### Your learning experience for the concept you focused on.
 
-**Identify your own level at the beginning of this course and where you ended**
+At the beginning of the course I would describe myself mainly as a modeller, with focus on making a building look correct within a BIM software. Now, after working with IFC data and scripting, I have gotten insights into how much values the underlying data and information in the BIM models have, and how in can be used for analysis and validation. I would therefore now identify myself as more of an analyst than a modeller. 
 
-**What else do you still need to learn?**
+There is still a lot I need to learn, especially when it comes to creating more advanced scripts, handling complex IFC files and understanding larger BIM workflows. I also want to develop a better overview of how to structure tools better so they are more scalable and easier to maintain. But I can see, that with more practice, and the right idea or use case, I would be able to create tools that makes BIM workflows more effective and efficient. 
 
-**How you might use OpenBIM in the future?**
-
+In the future, I would like to use BIM more actively to check models in the process, as it can save a lot of time and reduce errors, both in my own work and hen receiving models from others. 
 
 ### Your process of developing the tutorial
 
@@ -38,6 +37,8 @@ Yes, the tool succeeded to address the use case we identified ...
 **Would you have preferred to have been given less choice in the use cases?**
 
 **Was the number of tools for the course ok - should we have more or less? - if so which ones would you leave out?**
+
+
 
 ### Your future for Advanced use of OpenBIM
 
