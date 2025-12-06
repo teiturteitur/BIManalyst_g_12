@@ -38,10 +38,16 @@ In the future, I would like to use BIM more actively to check models in the proc
 
 **Was the number of tools for the course ok - should we have more or less? - if so which ones would you leave out?**
 
+The process of developing the tutorial helped me understand what we were building and why each step mattered. Writing things down made the workflow more concrete, and it also showed me which parts I understood well and which parts needed more clarification. In that way, the course process helped me define possible questions to explore later, such as how automated model checking could be integrated into design workflows, which is something I could potentially use in my thesis. 
 
+I think the freedom we had in choosing our own use case was good. It allowed us to work with something we found interesting, which made the project more motivating. It also gave us space to explore and expand the use case throughout the process, instead of being locked into something fixed from the beginning. 
+
+Regarding the number of tools, I think it was balanced. I did not get to use all the tools we were introduced to, but it was nice to know they were available if needed. It would have been helpful to know from the start that not all tools were required, as it can be quite overvwheldming in the beginning. A short introduction to the course website at the start of the semester would also have been usefulto understand how everything is structured and where to find information. 
 
 ### Your future for Advanced use of OpenBIM
 
-**are you likely to use OpenBIM tools in your thesis?**
+I think it is quite likely that I will use OpenBIM in my thesis. The course have shown me how much information can be hidden inside an IFC file and how many possibilities there are for doing check or extracting data that could otherwise be time consuming. If my thesis ends up involving modelling accuracy or system analysing, it would make a lot of sense to include OpenBIM. 
 
-**are you likely to use OpenBIM tools in your professsional life in the next 10 years?**
+Looking further ahead, I also think I will use OpenBIM tools in my professional life. The industry is moving towards more open workflows, automation and data-driven quality control, and I can see how useful it is to be able to understand what is going on behind the model. Being able to check or extract data myself will definitely be valuable. 
+
+Overall, the journey from A1 to A5 has taken from simply modelling to actually understanding BIM as a data structure and a tool for analysis. Each assignment added a different layer, from learning the basics of IFC to experimenting with data, building a tool and tutorial, and finally reflecting on the whole process. I now feel more confident working with these kinds of formats, scripts and model checking. 
