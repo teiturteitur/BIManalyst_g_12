@@ -17,7 +17,7 @@ Yes, the tool succeeded to address the use case we identified ...
 
 **What stage does the tool you created work in Advanced Building Design (stage A, B, C and/ or D)?**
 
-
+---
 # Individual reflections
 
 ## Katrine Aarup Nielsen - s214310
@@ -45,3 +45,38 @@ I think it is quite likely that I will use OpenBIM in my thesis. The course have
 Looking further ahead, I also think I will use OpenBIM tools in my professional life. The industry is moving towards more open workflows, automation and data-driven quality control, and I can see how useful it is to be able to understand what is going on behind the model. Being able to check or extract data myself will definitely be valuable. 
 
 Overall, the journey from A1 to A5 has taken from simply modelling to actually understanding BIM as a data structure and a tool for analysis. Each assignment added a different layer, from learning the basics of IFC to experimenting with data, building a tool and tutorial, and finally reflecting on the whole process. I now feel more confident working with these kinds of formats, scripts and model checking. 
+
+## Teitur Heinesen - s201348
+
+### Your learning experience for the concept you focused on.
+At the beginning of the course, I would describe myself mostly as a _Modeller_ when it came to BIM. I have learned a lot about the intricacies of IFC models and the possibilities they can provide when used as an analytical tool. Going into this course, I don't really think I understood what the IFC-file format offered and after using a lot of time exploring the possibilities they provide, I know how great the opportunities are for future digitilization of almost all fields using BIM models.
+
+I also understand how much more there is to learn and I am eager to try to incorporate free and open-source solutions in future work flows when possible. I also know how prone to errors BIM models can be, be it missing PSETs, wrong physical dimensions, elements clashing (or not clashing, when they need to be) and so on... 
+
+Essentially, it is a good practice to doubt most, if not all parts of a recieved BIM model and being flexible, as almost every part of the models can (and will undoubtedly) change multiple times.
+
+Therefore it is good to be able to develop tools that don't depend solely on manual interactions, but make use of automation, i.e. an analysis that runs every time an IFC file is updated on the cloud service used to colaborate. 
+
+I feel like I ended up as a _Self Learner_, as I spent so much time learning about the heaps of data found in IFC-files, how to use them and the shortcomings of the format.
+
+### Your process of developing the tutorial
+
+- Did the process of the course enable you to answer or define questions that you might need later for thesis?
+Develoing the tool and tutorial definitely opened some new doors, that I'll be able to use for my thesis. 
+
+I really liked being able to choose your own case and being able and it motivated me a lot during the course. That being said, I think some groups would gain a lot from having more strictly defined cases so they more easily could see the posibilities there is in the IFC format. I felt a bit like an outsider because I wanted to spend time learning about the IFC format and wanting to provide a useful tool.
+
+I think it would be great to show more of the tools provided, i.e. the voxelization tool, inspiring the students to use them.
+
+
+### Your future for Advanced use of OpenBIM
+
+As I mentioned earlier, I think some form of OpenBIM is going to have an essential role in the future of the built environment, and I think everyone studying Architectural Engineering (or Civil Engineering for that matter) should at least know what you can use it for. It is a great format for analysing and being able to compare models, even though some fields would only need a fraction of the data in an IFC-file.
+
+A good example of how OpenBIM tools are used in professional settings, is my current student assistant position in a computational fluid dynamics department. We recieve a lot of IFC files, where we only need a simplified version of the geometries present in them. But as the IFC files are way too detailed for out purposes, my colleagues and I are forced to re-model and simplify the geometries ourselves. I therefore think, some of the shortcomings of the IFC format, is that it is _too_ detailed for my colleagues and my CFD purpose. I would imagine that other fields in construction are facing the same problems.
+
+I have begun looking into FOOS solutions for geometry extraction and modification in my spare time and I aspire to use OpenBIM tools for the rest of my education as well as my professional life.
+
+In conclusion, I have learned a lot from this course, that I hope to use for future professional and academic endeavors and have become even more interested in the digitilization and automation of the built environment than I was before.
+
+
